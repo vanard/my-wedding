@@ -1,0 +1,61 @@
+---
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+import { invitation } from '../content/invitation';
+import { calendarUrl, longDate, timeRange } from '../lib/format';
+const { events, timeZone, couple, photos } = invitation;
+const first = events[0];
+const last = events[events.length - 1];
+const calendar = first && last ? calendarUrl({
+  title: `Pernikahan ${couple.first} & ${couple.second}`,
+  startsAt: first.startsAt,
+  endsAt: last.endsAt,
+  details: invitation.greeting,
+  location: first.venue,
+}) : null;
+---
+<section id="event" class="section save" aria-labelledby="save-heading">
+  <div class="bg"><Photo photo={photos.saveTheDate} /></div>
+  <div class="center" data-reveal>
+    <h2 id="save-heading">Save the Date</h2>
+    <p class="long-date">{longDate(invitation.startsAt, timeZone)}</p>
+    <div class="countdown" data-countdown data-starts-at={invitation.startsAt} hidden>
+      <p class="sr-only">Hitung mundur menuju hari pernikahan</p>
+      <div><span data-unit="days">0</span><small>Hari</small></div>
+      <div><span data-unit="hours">00</span><small>Jam</small></div>
+      <div><span data-unit="minutes">00</span><small>Menit</small></div>
+      <div><span data-unit="seconds">00</span><small>Detik</small></div>
+    </div>
+    <p class="done" data-countdown-done hidden>Hari bahagia telah tiba. Terima kasih atas doa dan kehadiran Anda.</p>
+    {calendar && <a class="button" href={calendar} target="_blank" rel="noopener noreferrer"><Icon name="calendar" size={16} />Simpan Tanggal<span class="sr-only"> (Google Calendar, tab baru)</span></a>}
+  </div>
+</section>
+<section class="section events" aria-label="Rangkaian acara">
+  <div class="bg"><Photo photo={photos.events} /></div>
+  {events.map((event) => (
+    <article class="event center" data-reveal>
+      <p class="eyebrow">{event.eyebrow}</p>
+      <h3>{event.title}</h3>
+      <p class="time">{timeRange(event.startsAt, event.endsAt, timeZone)}</p>
+      <p class="sr-only">{longDate(event.startsAt, timeZone)}</p>
+      <p class="venue">{event.venue}</p>
+      <p class="address">{event.address}</p>
+      {event.mapsUrl
+        ? <a class="button" href={event.mapsUrl} target="_blank" rel="noopener noreferrer"><Icon name="pin" size={16} />Buka Maps<span class="sr-only"> untuk {event.title} (tab baru)</span></a>
+        : <p class="small muted">Tautan peta akan tersedia segera.</p>}
+    </article>
+  ))}
+</section>
+<style>
+  .save { --overlay: rgb(18 18 17 / 0.66); padding-block: 6rem; }
+  .long-date { font-size: .9rem; margin-bottom: 1.5rem; }
+  .countdown { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 18rem; margin: 0 auto 2rem; }
+  .countdown span { display: block; font-family: var(--font-display); font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .countdown small { font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
+  .done { max-width: 18rem; margin: 0 auto 1.5rem; }
+  .events { --overlay: rgb(18 18 17 / 0.7); display: grid; gap: 4rem; padding-block: 5rem; }
+  .event h3 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 2.2rem; font-size: clamp(1.9rem, 10cqi, 2.6rem); line-height: 1.05; margin: .3rem 0 .7rem; }
+  .time { font-family: var(--font-display); font-size: 1.35rem; margin-bottom: .8rem; }
+  .venue { font-weight: 700; margin-bottom: .2rem; }
+  .address { color: var(--muted); font-size: .82rem; max-width: 20rem; margin: 0 auto 1.2rem; }
+</style>

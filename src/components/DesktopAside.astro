@@ -1,0 +1,33 @@
+---
+import { getImage } from 'astro:assets';
+import { invitation } from '../content/invitation';
+
+// Desktop-only photo. Phones match no <source> and receive a 1px placeholder instead of the image.
+const { photos, couple } = invitation;
+const widths = [960, 1400].filter((width) => width <= photos.desktop.src.width);
+const [avif, webp] = await Promise.all([
+  getImage({ src: photos.desktop.src, widths, format: 'avif' }),
+  getImage({ src: photos.desktop.src, widths, format: 'webp' }),
+]);
+const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+---
+<div class="desk" aria-hidden="true">
+  <picture>
+    <source media="(min-width: 960px)" type="image/avif" srcset={avif.srcSet.attribute} sizes="66vw" />
+    <source media="(min-width: 960px)" type="image/webp" srcset={webp.srcSet.attribute} sizes="66vw" />
+    <img class="fill" src={blank} alt="" style={photos.desktop.position ? `object-position: ${photos.desktop.position}` : undefined} />
+  </picture>
+  <div class="desk-text">
+    <p class="eyebrow">The wedding of</p>
+    <p class="names">{couple.first} &amp; {couple.second}</p>
+  </div>
+</div>
+<style>
+  .desk { display: none; }
+  @media (min-width: 960px) {
+    .desk { display: block; position: fixed; top: 0; bottom: 0; left: 0; right: var(--col); overflow: hidden; background: var(--bg-raised); }
+    .desk::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(18 18 17 / 0.1) 40%, rgb(18 18 17 / 0.7)); }
+    .desk-text { position: absolute; z-index: 1; left: clamp(2rem, 5vw, 5rem); bottom: clamp(2rem, 7vh, 5rem); right: 2rem; }
+    .names { font-family: var(--font-display); font-size: clamp(3rem, 5.5vw, 6rem); line-height: 1; margin: .5rem 0 0; }
+  }
+</style>

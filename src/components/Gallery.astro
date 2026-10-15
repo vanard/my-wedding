@@ -1,0 +1,68 @@
+---
+import { getImage } from 'astro:assets';
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+import { invitation } from '../content/invitation';
+const { gallery, closingQuote, couple } = invitation;
+// Full-size views are generated only when a guest opens them (or follows the link without JS).
+const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: photo.src, width: Math.min(1400, photo.src.width), format: 'webp' })));
+---
+<section id="gallery" class="section gallery" aria-labelledby="gallery-heading">
+  <div class="center" data-reveal>
+    <h2 id="gallery-heading">Our Moment</h2>
+    <p class="muted small">“{gallery.quote}”</p>
+  </div>
+  <ul class="grid" data-gallery>
+    {gallery.photos.map((photo, index) => (
+      <li>
+        <a href={full[index]?.src} data-gallery-item data-alt={photo.alt}>
+          <Photo photo={photo} widths={[320, 480, 640]} sizes="(min-width: 960px) 230px, 50vw" class="tile" />
+          <span class="sr-only">Perbesar foto {index + 1}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  <dialog class="lightbox" aria-label="Galeri foto" data-lightbox>
+    <img alt="" data-lightbox-image />
+    <p class="counter" data-lightbox-counter aria-live="polite"></p>
+    <button type="button" class="lb-btn close" data-lightbox-close><Icon name="close" /><span class="sr-only">Tutup galeri</span></button>
+    <button type="button" class="lb-btn prev" data-lightbox-prev><Icon name="left" /><span class="sr-only">Foto sebelumnya</span></button>
+    <button type="button" class="lb-btn next" data-lightbox-next><Icon name="right" /><span class="sr-only">Foto berikutnya</span></button>
+  </dialog>
+</section>
+{closingQuote && (
+  <section class="section quote" aria-label="Kutipan">
+    <figure data-reveal>
+      <Photo photo={closingQuote.photo} widths={[480, 768, 1080]} class="mono" />
+      <figcaption>
+        <blockquote><p>“{closingQuote.text}”</p></blockquote>
+        <p class="sign">{couple.first} &amp; {couple.second}</p>
+      </figcaption>
+    </figure>
+  </section>
+)}
+<style>
+  .gallery, .quote { background: var(--bg-raised); }
+  .gallery { padding-inline: .75rem; }
+  .grid { columns: 2; column-gap: .6rem; list-style: none; padding: 0; margin: 2rem 0 0; }
+  li { break-inside: avoid; margin-bottom: .6rem; }
+  li a { display: block; border-radius: 8px; overflow: hidden; }
+  li :global(.tile) { width: 100%; height: auto; transition: transform .5s ease; }
+  li a:hover :global(.tile) { transform: scale(1.04); }
+  .lightbox { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(12 12 11 / 0.96); color: var(--ink); }
+  .lightbox[open] { display: grid; place-items: center; }
+  .lightbox::backdrop { background: rgb(12 12 11 / 0.9); }
+  .lightbox img { max-width: calc(100vw - 2rem); max-height: calc(100dvh - 8rem); object-fit: contain; border-radius: 6px; }
+  .counter { position: absolute; top: calc(1.2rem + env(safe-area-inset-top)); left: 1.2rem; margin: 0; font-size: .8rem; letter-spacing: .1em; }
+  .lb-btn { position: absolute; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 50%; background: rgb(244 240 232 / 0.08); }
+  .close { top: calc(.75rem + env(safe-area-inset-top)); right: .75rem; }
+  .prev, .next { bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+  .prev { left: calc(50% - 60px); }
+  .next { right: calc(50% - 60px); }
+  .quote { padding-inline: 0; padding-top: 3rem; }
+  figure { margin: 0; }
+  figure :global(.mono) { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+  figcaption { padding: 2rem var(--gutter) 0; }
+  blockquote { margin: 0 0 .8rem; font-size: .82rem; font-weight: 600; text-align: justify; }
+  .sign { text-align: right; font-size: .78rem; margin: 0; }
+</style>

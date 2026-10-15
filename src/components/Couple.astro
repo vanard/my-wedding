@@ -1,0 +1,33 @@
+---
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+import { invitation } from '../content/invitation';
+---
+<section id="couple" aria-labelledby="couple-heading">
+  <h2 id="couple-heading" class="sr-only">Mempelai</h2>
+  {invitation.people.map((person) => (
+    <article class="person screen">
+      <div class="bg"><Photo photo={person.photo} /></div>
+      <div class="text" data-reveal>
+        <p class="eyebrow">{person.label}</p>
+        <h3>{person.fullName}</h3>
+        <span class="line" aria-hidden="true"></span>
+        <p class="eyebrow parent">{person.parentLine}</p>
+        <p class="parents">{person.parents}</p>
+        {person.instagram && (
+          <a class="pill" href={`https://instagram.com/${encodeURIComponent(person.instagram)}`} target="_blank" rel="noopener noreferrer">
+            <Icon name="instagram" size={16} />@{person.instagram}<span class="sr-only"> (Instagram, tab baru)</span>
+          </a>
+        )}
+      </div>
+    </article>
+  ))}
+</section>
+<style>
+  .person { --overlay: linear-gradient(180deg, transparent 45%, rgb(18 18 17 / 0.85)); position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; padding: 2rem var(--gutter) calc(3rem + env(safe-area-inset-bottom)); }
+  h3 { font-family: var(--font-display); font-weight: 400; font-size: 2.6rem; font-size: clamp(2.2rem, 13cqi, 3.2rem); line-height: 1.05; margin: .4rem 0 .9rem; }
+  .line { display: block; width: 2.5rem; height: 1px; background: var(--ink); margin-bottom: .9rem; }
+  .parent { letter-spacing: .12em; margin-bottom: .2rem; }
+  .parents { margin-bottom: 1rem; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; padding: 0 1rem; border: 1px solid var(--line); border-radius: 99px; font-size: .78rem; text-decoration: none; }
+</style>

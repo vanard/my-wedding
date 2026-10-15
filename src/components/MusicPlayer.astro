@@ -1,0 +1,20 @@
+---
+import Icon from './Icon.astro';
+import { invitation } from '../content/invitation';
+---
+<div class="music" data-music-player hidden>
+  <audio data-audio loop preload="none" src={invitation.music.src ?? undefined}></audio>
+  <p data-music-status role="status" class={invitation.music.src ? undefined : 'sr-only'}>{invitation.music.src ? '' : 'Musik belum tersedia.'}</p>
+  <button type="button" class="round glass" data-music-toggle aria-label="Putar musik" aria-pressed="false" disabled={!invitation.music.src}>
+    <span class="on"><Icon name="sound" /></span><span class="off"><Icon name="mute" /></span>
+    <span class="sr-only" data-music-label>Putar musik</span>
+  </button>
+</div>
+<style>
+  .music { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }
+  p { margin: 0; max-width: 12rem; padding: .35rem .7rem; border-radius: 6px; background: var(--glass-strong); font-size: .72rem; }
+  p:empty { display: none; }
+  .on { display: none; }
+  button[aria-pressed='true'] .on { display: contents; }
+  button[aria-pressed='true'] .off { display: none; }
+</style>

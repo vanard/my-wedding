@@ -1,0 +1,23 @@
+---
+import Photo from './Photo.astro';
+import { invitation } from '../content/invitation';
+const { dressCode, photos } = invitation;
+---
+{dressCode && (
+  <section class="section center dress" aria-labelledby="dress-heading">
+    <div class="bg"><Photo photo={photos.dressCode} /></div>
+    <div data-reveal>
+      <h2 id="dress-heading">A Guide to<br />Dress Codes</h2>
+      <p class="muted">{dressCode.text}</p>
+      <ul>
+        {dressCode.colors.map((color) => <li style={`--swatch: ${color.hex}`}><span class="sr-only">{color.name}</span></li>)}
+      </ul>
+    </div>
+  </section>
+)}
+<style>
+  .dress { --overlay: rgb(18 18 17 / 0.68); }
+  ul { display: flex; justify-content: center; list-style: none; padding: 0; margin: 1.5rem 0 0; }
+  li { width: 3.2rem; height: 3.2rem; border-radius: 50%; background: var(--swatch); border: 2px solid rgb(244 240 232 / 0.35); margin-left: -.55rem; box-shadow: 0 4px 14px rgb(0 0 0 / 0.3); }
+  li:first-child { margin-left: 0; }
+</style>

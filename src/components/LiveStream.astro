@@ -1,0 +1,25 @@
+---
+import Icon from './Icon.astro';
+import Photo from './Photo.astro';
+import { invitation } from '../content/invitation';
+import { longDate, timeRange } from '../lib/format';
+const { liveStream, events, timeZone, photos } = invitation;
+const first = events[0];
+---
+{liveStream && first && (
+  <section class="section live" aria-labelledby="live-heading">
+    <div class="bg blur"><Photo photo={photos.live} widths={[480]} /></div>
+    <div class="card glass center" data-reveal>
+      <h2 id="live-heading">Live Wedding</h2>
+      <p>{longDate(first.startsAt, timeZone)}<br />{timeRange(first.startsAt, first.endsAt, timeZone)}</p>
+      <p class="muted small">Kami akan menyiarkan momen bahagia ini secara virtual melalui {liveStream.platform} bagi Anda yang berhalangan hadir.</p>
+      {liveStream.url
+        ? <a class="button" href={liveStream.url} target="_blank" rel="noopener noreferrer"><Icon name="play" size={16} />Join Live<span class="sr-only"> (tab baru)</span></a>
+        : <p class="small">Tautan siaran akan dibagikan menjelang acara.</p>}
+    </div>
+  </section>
+)}
+<style>
+  .live { --overlay: rgb(18 18 17 / 0.45); padding-block: 4rem; }
+  .card { padding: 3rem 1.5rem; border-radius: 10px; }
+</style>

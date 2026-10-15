@@ -1,0 +1,26 @@
+---
+import Photo from './Photo.astro';
+import { invitation } from '../content/invitation';
+const { story, couple } = invitation;
+---
+<section id="story" class="section" aria-labelledby="story-heading">
+  <div class="bg blur"><Photo photo={story.background} widths={[480]} /></div>
+  <div class="photos" data-reveal>
+    {story.photos.map((photo) => <Photo photo={photo} widths={[320, 480]} sizes="(min-width: 960px) 200px, 45vw" class="thumb" />)}
+  </div>
+  <div data-reveal>
+    <h2 id="story-heading" class="center">Journey of Love</h2>
+    <ol>
+      {story.chapters.map((chapter) => <li><h3>{chapter.title}</h3><p>{chapter.text}</p></li>)}
+    </ol>
+    <p class="rule signature">{couple.first} &amp; {couple.second}</p>
+  </div>
+</section>
+<style>
+  .photos { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; max-width: 20rem; margin: 0 auto 2.5rem; }
+  .photos :global(.thumb) { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
+  ol { list-style: none; padding: 0; margin: 0 0 2rem; }
+  li { margin-bottom: 1.2rem; }
+  li p { margin: 0; color: var(--muted); font-size: .82rem; text-align: justify; hyphens: auto; }
+  .signature { font-family: var(--font-display); font-size: 1.3rem; margin: 0; }
+</style>

@@ -1,0 +1,46 @@
+---
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+import { invitation } from '../content/invitation';
+import { coverDate } from '../lib/format';
+const { couple, photos, quote } = invitation;
+const date = coverDate(invitation.startsAt, invitation.timeZone);
+---
+<section id="home" class="hero screen" aria-labelledby="hero-heading">
+  <div class="bg slides" aria-hidden="true">
+    {photos.hero.map((photo, index) => <div class="slide" style={`--i: ${index}; --n: ${photos.hero.length}`}><Photo photo={photo} /></div>)}
+  </div>
+  <div class="top">
+    <p class="date eyebrow"><span>{date.dayMonth}</span><span>{date.year}</span></p>
+    <p class="eyebrow">The wedding of</p>
+    <h2 id="hero-heading">{couple.first} &amp;<br />{couple.second}</h2>
+  </div>
+  <p class="ghost" aria-hidden="true">{couple.first} // {couple.second}</p>
+  <div class="bottom" data-reveal>
+    <blockquote>
+      <p>“{quote.text}”</p>
+      <footer>{quote.source}</footer>
+    </blockquote>
+    <a class="scroll" href="#couple"><Icon name="down" size={24} /><span class="sr-only">Gulir ke profil mempelai</span></a>
+  </div>
+</section>
+<style>
+  .hero { --overlay: linear-gradient(180deg, rgb(18 18 17 / 0.6), rgb(18 18 17 / 0.25) 45%, rgb(18 18 17 / 0.85)); position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: calc(5rem + env(safe-area-inset-top)) var(--gutter) 1.5rem; text-align: center; }
+  .slide { position: absolute; inset: 0; opacity: 0; animation: slide calc(var(--n) * 6s) infinite both; animation-delay: calc(var(--i) * 6s); }
+  .slide:first-child { opacity: 1; }
+  @keyframes slide {
+    0% { opacity: 0; transform: scale(1.1); }
+    8% { opacity: 1; }
+    33% { opacity: 1; }
+    42% { opacity: 0; transform: scale(1); }
+    100% { opacity: 0; }
+  }
+  .date { display: flex; justify-content: space-between; max-width: 15rem; margin: 0 auto 2.5rem; }
+  h2 { font-size: 3.6rem; font-size: clamp(3rem, 17cqi, 4.4rem); text-transform: none; margin: .8rem 0 0; }
+  .ghost { position: absolute; left: 0; right: 0; top: 52%; margin: 0; font-family: var(--font-display); font-size: 2.2rem; font-size: clamp(1.8rem, 10cqi, 2.6rem); letter-spacing: .3em; text-transform: uppercase; white-space: nowrap; color: rgb(244 240 232 / 0.18); pointer-events: none; }
+  blockquote { margin: 0 auto 1rem; max-width: 22rem; font-size: .78rem; font-weight: 600; }
+  blockquote p { margin-bottom: .5rem; }
+  blockquote footer { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+  .scroll { display: inline-grid; place-items: center; width: 44px; height: 44px; animation: bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(6px); } }
+</style>

@@ -1,0 +1,46 @@
+---
+import InvitationLayout from '../layouts/InvitationLayout.astro';
+import DesktopAside from '../components/DesktopAside.astro';
+import IntroCover from '../components/IntroCover.astro';
+import Hero from '../components/Hero.astro';
+import Couple from '../components/Couple.astro';
+import Story from '../components/Story.astro';
+import Schedule from '../components/Schedule.astro';
+import DressCode from '../components/DressCode.astro';
+import LiveStream from '../components/LiveStream.astro';
+import Gallery from '../components/Gallery.astro';
+import GuestForms from '../components/GuestForms.astro';
+import Gifts from '../components/Gifts.astro';
+import Closing from '../components/Closing.astro';
+import Controls from '../components/Controls.astro';
+import { invitation } from '../content/invitation';
+
+const { couple, isPreview } = invitation;
+const title = `${isPreview ? 'Pratinjau · ' : ''}The Wedding of ${couple.first} & ${couple.second}`;
+---
+<InvitationLayout title={title} description={invitation.greeting}>
+  <DesktopAside />
+  <div class="column">
+    <IntroCover />
+    <main id="invitation" tabindex="-1">
+      <Hero />
+      <Couple />
+      <Story />
+      <Schedule />
+      <DressCode />
+      <LiveStream />
+      <Gallery />
+      <GuestForms />
+      <Gifts />
+      <Closing />
+    </main>
+    <Controls />
+  </div>
+  <script>
+    import { initInvitation } from '../scripts/invitation';
+    initInvitation();
+  </script>
+</InvitationLayout>
+<style>
+  main:focus { outline: none; }
+</style>

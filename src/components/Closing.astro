@@ -1,0 +1,20 @@
+---
+import Photo from './Photo.astro';
+import { invitation } from '../content/invitation';
+const { closing, couple, startsAt, timeZone } = invitation;
+const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(new Date(startsAt));
+---
+<footer class="closing screen" aria-labelledby="closing-heading">
+  <div class="bg"><Photo photo={closing.photo} /></div>
+  <div class="center" data-reveal>
+    <h2 id="closing-heading">Thank You</h2>
+    <p class="small">{closing.text}</p>
+    <p class="names">{couple.first} &amp; {couple.second}</p>
+  </div>
+  <p class="credit center">{couple.first} &amp; {couple.second} · {year}</p>
+</footer>
+<style>
+  .closing { --overlay: linear-gradient(180deg, rgb(18 18 17 / 0.85), rgb(18 18 17 / 0.3) 55%, rgb(18 18 17 / 0.75)); position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 5rem var(--gutter) calc(6rem + env(safe-area-inset-bottom)); }
+  .names { font-family: var(--font-display); font-size: 1.6rem; margin: 0; }
+  .credit { margin: 0; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+</style>

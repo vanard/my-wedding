@@ -1,0 +1,44 @@
+---
+import Icon from './Icon.astro';
+import { invitation } from '../content/invitation';
+const { gifts } = invitation;
+const icons = { bank: 'bank', wallet: 'wallet', address: 'gift' } as const;
+---
+{gifts && (
+  <section id="gift" class="section gift" aria-labelledby="gift-heading">
+    <div class="center" data-reveal>
+      <h2 id="gift-heading">Wedding Gift</h2>
+      <p class="muted small">{gifts.text}</p>
+    </div>
+    <ul data-reveal>
+      {gifts.accounts.map((account) => (
+        <li>
+          <span class="icon"><Icon name={icons[account.kind]} size={22} /></span>
+          <div class="info">
+            <p class="provider">{account.provider}</p>
+            <p class="holder">{account.holder}</p>
+            <p class="value">{account.value ?? 'Belum tersedia'}</p>
+          </div>
+          {account.value && (
+            <button type="button" class="copy" data-copy={account.value} data-copy-label={account.provider}>
+              <Icon name="copy" size={18} /><span class="sr-only">Salin {account.provider}</span>
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+    <p class="status center" role="status" data-copy-status></p>
+  </section>
+)}
+<style>
+  .gift { background: var(--bg-raised); }
+  ul { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1.2rem; }
+  li { display: grid; grid-template-columns: 2.75rem 1fr auto; align-items: center; gap: .9rem; }
+  .icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 8px; background: rgb(244 240 232 / 0.12); }
+  .info p { margin: 0; }
+  .provider { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .holder { font-size: .82rem; }
+  .value { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+  .copy { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; }
+  .copy:hover { background: rgb(244 240 232 / 0.1); }
+</style>

@@ -1,0 +1,19 @@
+:root {
+  --bg: #1f1f1e;
+  --bg-raised: #2a2a28;
+  --ink: #f4f0e8;
+  --muted: #cfc8bc;
+  --line: rgb(244 240 232 / 0.3);
+  --glass: rgb(58 58 55 / 0.55);
+  --glass-strong: rgb(40 40 38 / 0.82);
+  --shade: rgb(18 18 17 / 0.62);
+  --accent: #dcc6a3;
+  --font-display: 'Italiana', 'Didot', 'Bodoni 72', Georgia, serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Width of the scrolling invitation column; the full viewport on phones. */
+  --col: 100vw;
+  --gutter: 1.5rem;
+}
+@media (min-width: 960px) {
+  :root { --col: clamp(400px, 34vw, 480px); }
+}

@@ -1,0 +1,66 @@
+---
+// Forms are a visual foundation. They stay disabled until the API is implemented.
+import Photo from './Photo.astro';
+import { invitation } from '../content/invitation';
+const { photos } = invitation;
+---
+<section id="rsvp" class="section rsvp" aria-labelledby="rsvp-heading">
+  <div class="bg"><Photo photo={photos.rsvp} /></div>
+  <div class="center" data-reveal>
+    <h2 id="rsvp-heading">RSVP</h2>
+    <p class="small">Bagi tamu undangan yang akan hadir, mohon konfirmasi kehadiran melalui formulir berikut.</p>
+    <p class="notice" id="rsvp-note">Konfirmasi kehadiran belum dibuka. Silakan kembali setelah undangan lengkap tersedia.</p>
+  </div>
+  <form aria-describedby="rsvp-note" data-rsvp-form>
+    <fieldset disabled>
+      <legend class="sr-only">Konfirmasi kehadiran</legend>
+      <div class="field"><label for="rsvp-name">Nama</label><input id="rsvp-name" name="name" autocomplete="name" maxlength="100" required /></div>
+      <fieldset class="field">
+        <legend>Konfirmasi kehadiran</legend>
+        <div class="choices">
+          <label><input type="radio" name="attendance" value="attending" required /><span>Hadir</span></label>
+          <label><input type="radio" name="attendance" value="declined" /><span>Tidak hadir</span></label>
+        </div>
+      </fieldset>
+      <div class="field"><label for="party-size">Jumlah tamu yang hadir</label><input id="party-size" name="guestCount" type="number" inputmode="numeric" min="0" step="1" value="1" required /></div>
+      <button class="button block" type="submit">Kirim konfirmasi</button>
+    </fieldset>
+    <p class="status" role="status" data-rsvp-status></p>
+  </form>
+</section>
+<section id="wishes" class="section wishes" aria-labelledby="wishes-heading">
+  <div class="bg"><Photo photo={photos.wishes} /></div>
+  <div class="center" data-reveal>
+    <h2 id="wishes-heading">Wishes</h2>
+    <p class="small">Terima kasih telah memberikan ucapan, doa, dan harapan terbaik untuk perjalanan baru kami.</p>
+  </div>
+  <form aria-describedby="wishes-note" data-wishes-form>
+    <p id="wishes-note" class="notice">Buku tamu belum dibuka.</p>
+    <fieldset disabled>
+      <legend class="sr-only">Tulis ucapan</legend>
+      <div class="field"><label for="wish-name">Nama</label><input id="wish-name" name="name" autocomplete="name" maxlength="100" required /></div>
+      <div class="field"><label for="wish-message">Doa &amp; ucapan</label><textarea id="wish-message" name="message" rows="4" maxlength="1000" required></textarea></div>
+      <button class="button block" type="submit">Kirim ucapan</button>
+    </fieldset>
+    <p class="status" role="status" data-wishes-status></p>
+  </form>
+  <div class="list" data-wishes-list aria-live="polite">
+    <p class="empty glass">Ucapan akan ditampilkan di sini setelah buku tamu dibuka.</p>
+  </div>
+  <button class="button block" type="button" data-wishes-more hidden>Muat ucapan lainnya</button>
+</section>
+<style>
+  .rsvp { --overlay: rgb(18 18 17 / 0.72); }
+  .wishes { --overlay: rgb(18 18 17 / 0.78); }
+  form { margin-top: 1.5rem; }
+  .notice { font-size: .78rem; color: var(--muted); margin: 1rem 0 0; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .choices label { position: relative; margin: 0; }
+  .choices input { position: absolute; opacity: 0; width: 100%; height: 100%; min-height: 0; margin: 0; }
+  .choices span { display: grid; place-items: center; min-height: 44px; border: 1px solid rgb(244 240 232 / 0.7); border-radius: 6px; font-size: .78rem; font-weight: 700; }
+  .choices input:checked + span { background: var(--ink); color: var(--bg); }
+  .choices input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .list { margin-top: 2rem; }
+  .empty { margin: 0; padding: 1rem; border-radius: 8px; font-size: .8rem; text-align: center; }
+  [data-wishes-more] { margin-top: 1rem; }
+</style>
