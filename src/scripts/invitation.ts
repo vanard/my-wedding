@@ -60,16 +60,17 @@ export function initInvitation() {
     window.scrollTo({ top: 0, behavior: 'auto' });
     open(true, true);
     showToast();
-    history.replaceState(null, '', `${location.pathname}${location.search}#invitation`);
   });
   document.querySelector('.skip-link')?.addEventListener('click', () => open(false, false));
 
-  // Direct section links work, but never bypass the browser's music gesture rules.
+  // Every visit starts at the cover (who is invited + "Buka Undangan"). Only a link to a
+  // specific section such as #rsvp skips it, and never bypasses the music gesture rules.
   const section = document.getElementById(location.hash.slice(1));
-  if (section && (section === main || main.contains(section))) {
+  if (section && section !== main && main.contains(section)) {
     open(false, false);
     section.scrollIntoView();
   } else {
+    if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
     // Applied only after the opening handler is ready. Without JS all content stays readable.
     main.hidden = true;
   }

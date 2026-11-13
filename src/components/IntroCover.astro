@@ -26,14 +26,13 @@ const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAA
         fetchpriority="high" decoding="async" style={photos.cover.position ? `object-position: ${photos.cover.position}` : undefined} />
     </picture>
   </div>
-  {isPreview && <p class="preview">Pratinjau · nama, tanggal &amp; foto masih sementara</p>}
   <div class="top">
-    <p class="date eyebrow"><span>{date.dayMonth}</span><span>{date.year}</span></p>
     <p class="eyebrow">The wedding of</p>
     <h1>{couple.first} &amp;<br />{couple.second}</h1>
   </div>
   <div class="bottom">
-    <p class="eyebrow">Kepada</p>
+    <p class="eyebrow">Kepada Yth.</p>
+    <p class="small honorific">Bapak/Ibu/Saudara/i</p>
     <p class="guest" data-guest-name>Tamu Undangan</p>
     <p class="small">Dengan segala hormat, kami mengundang Anda untuk menghadiri acara pernikahan kami.</p>
     <a class="button" href="#invitation" data-open-invitation>Buka Undangan</a>
@@ -48,8 +47,13 @@ const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAA
   h1 { font-size: 3.6rem; font-size: clamp(3rem, 17cqi, 4.4rem); margin: .8rem 0 0; }
   .bottom { max-width: 20rem; margin-inline: auto; }
   .bottom .eyebrow { margin-bottom: .2rem; }
+  .honorific { margin-bottom: .1rem; }
   .guest { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.2; margin-bottom: .6rem; overflow-wrap: anywhere; }
   .small { margin-bottom: 1.5rem; }
   /* Desktop: the shared backdrop (already shaded) shows through instead of the cover photo. */
-  @media (min-width: 960px) { .cover > .bg { display: none; } }
+  @media (min-width: 960px) {
+    .cover > .bg { display: none; }
+    /* Desktop: draw the top and bottom groups toward the middle of the column. */
+    .cover { padding-block: clamp(3.5rem, 13vh, 9rem); }
+  }
 </style>

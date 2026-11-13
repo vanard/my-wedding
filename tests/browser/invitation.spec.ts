@@ -21,6 +21,19 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   expect(errors).toEqual([]);
 });
 
+test('every visit starts at the cover, including a reload after opening', async ({ page }) => {
+  await page.goto('/?to=Budi');
+  await expect(page.locator('#cover')).toBeVisible();
+  await expect(page.locator('#cover [data-guest-name]')).toHaveText('Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await expect(page.locator('main')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#cover')).toBeVisible();
+  await expect(page.locator('main')).toBeHidden();
+  await page.goto('/?to=Budi#invitation');
+  await expect(page.locator('#cover')).toBeVisible();
+});
+
 test('background video starts loading before opening, but not with reduced motion', async ({ page, browser }) => {
   await page.goto('/?to=Budi');
   // Playback itself depends on the browser's H.264 support; the request is what we control.
