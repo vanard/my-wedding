@@ -12,6 +12,12 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await expect(page.locator('#cover')).toBeHidden();
   await expect(page.locator('main')).toBeVisible();
+  // The Entry Access Card replaces the greeting pop-up; closing it returns focus to the invitation.
+  const card = page.getByRole('dialog', { name: 'Vian & Ghea' });
+  await expect(card).toBeVisible();
+  await expect(card.locator('[data-guest-name]')).toHaveText('<script>Guest</script>');
+  await page.keyboard.press('Escape');
+  await expect(card).toBeHidden();
   await expect(page.locator('main')).toBeFocused();
   await expect(page.locator('[data-music-player]')).toBeVisible();
   await expect(page.locator('[data-music-toggle]')).toBeDisabled();
@@ -91,6 +97,7 @@ test('countdown stops gracefully once the event has started', async ({ page }) =
 test('menu opens, closes with Escape and returns focus', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
   const toggle = page.getByRole('button', { name: 'Buka menu' });
   await toggle.click();
   await expect(page.getByRole('navigation', { name: 'Navigasi undangan' })).toBeVisible();
@@ -98,4 +105,25 @@ test('menu opens, closes with Escape and returns focus', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: 'Navigasi undangan' })).toBeHidden();
   await expect(toggle).toBeFocused();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('access card shows a QR only for a well-formed personal code', async ({ page }) => {
+  const code = 'kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA';
+  await page.goto(`/?to=Budi&k=${code}`);
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  const card = page.getByRole('dialog', { name: 'Vian & Ghea' });
+  await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeVisible();
+  await card.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  await page.getByRole('button', { name: 'Kartu akses masuk' }).click();
+  await expect(card).toBeVisible();
+
+  // A malformed or missing code never produces a QR (and nothing from ?k= is rendered as markup).
+  for (const query of ['?to=Budi&k=%3Cimg%20src%3Dx%3E', '?to=Budi']) {
+    await page.goto(`/${query}`);
+    await page.getByRole('link', { name: 'Buka Undangan' }).click();
+    await expect(card.getByText('Kode QR tersedia pada tautan undangan pribadi Anda.')).toBeVisible();
+    await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toHaveCount(0);
+    await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeHidden();
+  }
 });

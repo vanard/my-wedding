@@ -14,6 +14,7 @@ import GuestForms from '../components/GuestForms.astro';
 import Gifts from '../components/Gifts.astro';
 import Closing from '../components/Closing.astro';
 import Controls from '../components/Controls.astro';
+import AccessCard from '../components/AccessCard.astro';
 import { invitation } from '../content/invitation';
 
 const { couple, isPreview } = invitation;
@@ -37,6 +38,7 @@ const title = `${isPreview ? 'Pratinjau · ' : ''}The Wedding of ${couple.first}
       <Closing />
     </main>
     <Controls />
+    <AccessCard />
   </div>
   <script>
     import { initInvitation } from '../scripts/invitation';
