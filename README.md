@@ -43,7 +43,7 @@ controls appear after opening.
 ## Structure
 
 - `src/content/invitation.ts`: typed names, dates, story, events, gifts, photos and audio.
-- `src/assets/placeholder/`: temporary Unsplash photos (see `CREDITS.md`); replace before launch.
+- `src/assets/media/`: the couple's photos and videos (web versions; see its README). Originals live in the git-ignored `media-originals/`.
 - `src/lib/format.ts`: timezone-aware date/time text and the calendar link.
 - `src/layouts/`: document metadata and global style entry point.
 - `src/components/`: one component per section, plus `Photo` (responsive AVIF/WebP) and `Icon`.

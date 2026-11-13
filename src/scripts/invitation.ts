@@ -5,6 +5,7 @@ import { initCountdown } from './countdown';
 import { initGallery } from './gallery';
 import { initCopy } from './copy';
 import { initFullscreen } from './fullscreen';
+import { initBackdrop } from './backdrop';
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -28,6 +29,7 @@ export function initInvitation() {
   if (guest) document.querySelectorAll('[data-guest-name]').forEach((element) => { element.textContent = guest; });
 
   const music = initMusic();
+  const startBackdrop = initBackdrop();
   initCountdown();
   initGallery();
   initCopy();
@@ -39,6 +41,7 @@ export function initInvitation() {
     main.hidden = false;
     document.querySelectorAll<HTMLElement>('[data-menu-toggle], [data-side-controls]').forEach((element) => { element.hidden = false; });
     music.open(playMusic);
+    startBackdrop();
     initMenu();
     initFullscreen();
     main.focus({ preventScroll: true });

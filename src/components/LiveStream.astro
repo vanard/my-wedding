@@ -1,14 +1,12 @@
 ---
 import Icon from './Icon.astro';
-import Photo from './Photo.astro';
 import { invitation } from '../content/invitation';
 import { longDate, timeRange } from '../lib/format';
-const { liveStream, events, timeZone, photos } = invitation;
+const { liveStream, events, timeZone } = invitation;
 const first = events[0];
 ---
 {liveStream && first && (
   <section class="section live" aria-labelledby="live-heading">
-    <div class="bg blur"><Photo photo={photos.live} widths={[480]} /></div>
     <div class="card glass center" data-reveal>
       <h2 id="live-heading">Live Wedding</h2>
       <p>{longDate(first.startsAt, timeZone)}<br />{timeRange(first.startsAt, first.endsAt, timeZone)}</p>
@@ -20,6 +18,6 @@ const first = events[0];
   </section>
 )}
 <style>
-  .live { --overlay: rgb(18 18 17 / 0.45); padding-block: 4rem; }
+  .live { padding-block: 4rem; }
   .card { padding: 3rem 1.5rem; border-radius: 10px; }
 </style>

@@ -1,6 +1,7 @@
 ---
 import InvitationLayout from '../layouts/InvitationLayout.astro';
 import DesktopAside from '../components/DesktopAside.astro';
+import Backdrop from '../components/Backdrop.astro';
 import IntroCover from '../components/IntroCover.astro';
 import Hero from '../components/Hero.astro';
 import Couple from '../components/Couple.astro';
@@ -20,6 +21,7 @@ const title = `${isPreview ? 'Pratinjau · ' : ''}The Wedding of ${couple.first}
 ---
 <InvitationLayout title={title} description={invitation.greeting}>
   <DesktopAside />
+  <Backdrop />
   <div class="column">
     <IntroCover />
     <main id="invitation" tabindex="-1">

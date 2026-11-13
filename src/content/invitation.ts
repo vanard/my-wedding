@@ -1,29 +1,20 @@
 import type { ImageMetadata } from 'astro';
 
-// TEMPORARY PHOTOS: free Unsplash images used only as layout placeholders.
-// Replace each import with the couple's own photos (see src/assets/placeholder/CREDITS.md).
-import beachVeil from '../assets/placeholder/beach-veil.jpg';
-import blackBeach from '../assets/placeholder/black-beach.jpg';
-import hillsWalk from '../assets/placeholder/hills-walk.jpg';
-import veilField from '../assets/placeholder/veil-field.jpg';
-import coupleGolden from '../assets/placeholder/couple-golden.jpg';
-import brideRoad from '../assets/placeholder/bride-road.jpg';
-import handsRing from '../assets/placeholder/hands-ring.jpg';
-import holdingHands from '../assets/placeholder/holding-hands.jpg';
-import ringHand from '../assets/placeholder/ring-hand.jpg';
-import bouquetDark from '../assets/placeholder/bouquet-dark.jpg';
-import gazebo from '../assets/placeholder/gazebo.jpg';
-import shoes from '../assets/placeholder/shoes.jpg';
-import veilMono from '../assets/placeholder/veil-mono.jpg';
-import aisle from '../assets/placeholder/aisle.jpg';
-import table from '../assets/placeholder/table.jpg';
-import confettiKiss from '../assets/placeholder/confetti-kiss.jpg';
-import bouquetPeach from '../assets/placeholder/bouquet-peach.jpg';
-import ringsFlowers from '../assets/placeholder/rings-flowers.jpg';
-import balloons from '../assets/placeholder/balloons.jpg';
-import mrMrsSign from '../assets/placeholder/mr-mrs-sign.jpg';
-import flowerArch from '../assets/placeholder/flower-arch.jpg';
-import boutonnieres from '../assets/placeholder/boutonnieres.jpg';
+// The couple's own photos (web versions generated from media-originals/; see src/assets/media/README.md).
+import groom from '../assets/media/groom.jpg';
+import bride from '../assets/media/bride.jpg';
+import coverPhoto from '../assets/media/photo-05.jpg';
+import backdropPoster from '../assets/media/photo-08.jpg';
+import backdropVideo from '../assets/media/background.mp4';
+import storyRings from '../assets/media/album/photo-01.jpg';
+import storyHands from '../assets/media/album/img_4301.jpg';
+
+// Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
+const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
+const album: Photo[] = Object.keys(albumFiles).sort().map((file, index) => ({
+  src: albumFiles[file]!,
+  alt: `Foto prewedding Vian dan Ghea ${index + 1}`,
+}));
 
 export interface Photo {
   src: ImageMetadata;
@@ -70,15 +61,18 @@ export interface InvitationContent {
   startsAt: string;
   timeZone: string;
   people: Person[];
-  story: { photos: [Photo, Photo]; background: Photo; chapters: { title: string; text: string }[] };
+  story: { photos: [Photo, Photo]; chapters: { title: string; text: string }[] };
   events: WeddingEvent[];
   dressCode: { text: string; colors: { name: string; hex: string }[] } | null;
   liveStream: { platform: string; url: string | null } | null;
   gallery: { quote: string; photos: Photo[] };
-  closingQuote: { text: string; photo: Photo } | null;
+  /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
+  closingQuote: { text: string; photo: Photo | null } | null;
   gifts: { text: string; accounts: GiftAccount[] } | null;
-  closing: { text: string; photo: Photo };
-  photos: { cover: Photo; desktop: Photo; hero: Photo[]; saveTheDate: Photo; events: Photo; dressCode: Photo; live: Photo; rsvp: Photo; wishes: Photo };
+  closing: { text: string };
+  photos: { cover: Photo; desktop: Photo };
+  /** Shared background behind the scrolling sections: muted video URL, and the photo shown until it plays. */
+  backdrop: { video: string; poster: Photo };
   music: { src: string | null; title: string };
 }
 
@@ -101,7 +95,7 @@ export const invitation: InvitationContent = {
       parentLine: 'Putra dari',
       parents: 'Bapak (nama ayah) & Ibu (nama ibu)',
       instagram: null,
-      photo: { src: coupleGolden, alt: 'Foto sementara mempelai pria', position: '68% 50%' },
+      photo: { src: groom, alt: 'Vian Rasyid D tersenyum mengenakan jas krem di tepi pantai', position: '45% 50%' },
     },
     {
       label: 'Mempelai Wanita',
@@ -109,15 +103,14 @@ export const invitation: InvitationContent = {
       parentLine: 'Putri dari',
       parents: 'Bapak (nama ayah) & Ibu (nama ibu)',
       instagram: null,
-      photo: { src: brideRoad, alt: 'Foto sementara mempelai wanita', position: '50% 40%' },
+      photo: { src: bride, alt: 'Ghea Citra M tersenyum mengenakan gaun pengantin dan hijab putih di tepi pantai', position: '60% 50%' },
     },
   ],
   story: {
     photos: [
-      { src: holdingHands, alt: 'Foto sementara: dua tangan saling menggenggam' },
-      { src: ringHand, alt: 'Foto sementara: tangan dengan cincin' },
+      { src: storyRings, alt: 'Dua tangan memegang sepasang cincin', position: '50% 55%' },
+      { src: storyHands, alt: 'Siluet dua tangan saling menggenggam diterpa cahaya senja', position: '50% 35%' },
     ],
-    background: { src: handsRing, alt: '' },
     // TEMPORARY: replace with your own story.
     chapters: [
       { title: 'Bab satu: Awal bertemu', text: 'Cerita awal pertemuan kalian akan ditulis di sini. Teks ini hanya contoh.' },
@@ -162,24 +155,11 @@ export const invitation: InvitationContent = {
   liveStream: { platform: 'YouTube', url: null },
   gallery: {
     quote: 'Setiap foto menyimpan satu cerita kecil tentang perjalanan kami.',
-    photos: [
-      { src: coupleGolden, alt: 'Foto sementara: pasangan tersenyum di bawah sinar matahari' },
-      { src: confettiKiss, alt: 'Foto sementara: pasangan dihujani kelopak bunga' },
-      { src: veilField, alt: 'Foto sementara: pasangan berselimut kerudung di padang rumput' },
-      { src: bouquetPeach, alt: 'Foto sementara: buket bunga peach' },
-      { src: blackBeach, alt: 'Foto sementara: pasangan di pantai berpasir hitam' },
-      { src: ringsFlowers, alt: 'Foto sementara: cincin di antara bunga' },
-      { src: hillsWalk, alt: 'Foto sementara: pasangan berjalan di perbukitan' },
-      { src: beachVeil, alt: 'Foto sementara: pasangan di tepi pantai' },
-      { src: balloons, alt: 'Foto sementara: perayaan dengan balon' },
-      { src: flowerArch, alt: 'Foto sementara: rangkaian bunga di gerbang' },
-      { src: mrMrsSign, alt: 'Foto sementara: papan bertuliskan Mr & Mrs' },
-      { src: boutonnieres, alt: 'Foto sementara: dua bros bunga' },
-    ],
+    photos: album,
   },
   closingQuote: {
     text: 'Di antara banyak hal yang kami syukuri, salah satunya adalah bisa menyebut satu sama lain sebagai rumah.',
-    photo: { src: veilMono, alt: 'Foto sementara hitam putih pasangan berkerudung' },
+    photo: null,
   },
   // TEMPORARY: never publish real account numbers until the couple provides them.
   gifts: {
@@ -192,23 +172,13 @@ export const invitation: InvitationContent = {
   },
   closing: {
     text: 'Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Anda berkenan hadir dan memberikan doa restu.',
-    photo: { src: blackBeach, alt: '' },
   },
   photos: {
-    cover: { src: beachVeil, alt: '', position: '50% 35%' },
-    desktop: { src: hillsWalk, alt: '' },
-    hero: [
-      { src: veilField, alt: '' },
-      { src: coupleGolden, alt: '', position: '65% 50%' },
-      { src: confettiKiss, alt: '' },
-    ],
-    saveTheDate: { src: bouquetDark, alt: '' },
-    events: { src: gazebo, alt: '' },
-    dressCode: { src: shoes, alt: '' },
-    live: { src: veilField, alt: '' },
-    rsvp: { src: aisle, alt: '' },
-    wishes: { src: table, alt: '' },
+    // photo-05: on portrait screens the crop centres on the couple.
+    cover: { src: coverPhoto, alt: '', position: '53% 50%' },
+    desktop: { src: coverPhoto, alt: '' },
   },
+  backdrop: { video: backdropVideo, poster: { src: backdropPoster, alt: '' } },
   // Put your licensed audio in public/audio/ and set src to '/audio/your-song.mp3'.
   music: { src: null, title: 'Musik undangan' },
 };

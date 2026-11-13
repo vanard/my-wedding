@@ -33,7 +33,7 @@ const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: pho
 {closingQuote && (
   <section class="section quote" aria-label="Kutipan">
     <figure data-reveal>
-      <Photo photo={closingQuote.photo} widths={[480, 768, 1080]} class="mono" />
+      {closingQuote.photo && <Photo photo={closingQuote.photo} widths={[480, 768, 1080]} class="mono" />}
       <figcaption>
         <blockquote><p>“{closingQuote.text}”</p></blockquote>
         <p class="sign">{couple.first} &amp; {couple.second}</p>
@@ -42,7 +42,6 @@ const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: pho
   </section>
 )}
 <style>
-  .gallery, .quote { background: var(--bg-raised); }
   .gallery { padding-inline: .75rem; }
   .grid { columns: 2; column-gap: .6rem; list-style: none; padding: 0; margin: 2rem 0 0; }
   li { break-inside: avoid; margin-bottom: .6rem; }

@@ -1,0 +1,18 @@
+---
+// Shared background behind the invitation column: the poster photo first, then the
+// muted teaser loop once the page has loaded (see src/scripts/backdrop.ts).
+// Without JS, with reduced motion, or with Data Saver, only the photo is shown.
+import Photo from './Photo.astro';
+import { invitation } from '../content/invitation';
+const { backdrop } = invitation;
+---
+<div class="backdrop" aria-hidden="true">
+  <Photo photo={backdrop.poster} sizes="(min-width: 960px) 600px, 150vw" />
+  <video data-backdrop-video data-src={backdrop.video} muted loop playsinline preload="none" disablepictureinpicture tabindex="-1"></video>
+</div>
+<style>
+  .backdrop { position: fixed; z-index: -1; top: 0; right: 0; width: var(--col); height: 100vh; height: 100lvh; overflow: hidden; background: var(--bg); }
+  .backdrop::after { content: ''; position: absolute; inset: 0; background: var(--shade); }
+  video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
+  video.is-playing { opacity: 1; }
+</style>

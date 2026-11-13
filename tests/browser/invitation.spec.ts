@@ -21,6 +21,19 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   expect(errors).toEqual([]);
 });
 
+test('background video starts loading before opening, but not with reduced motion', async ({ page, browser }) => {
+  await page.goto('/?to=Budi');
+  // Playback itself depends on the browser's H.264 support; the request is what we control.
+  await expect(page.locator('[data-backdrop-video]')).toHaveAttribute('src', /background\..*\.mp4$/);
+  await expect(page.locator('#cover')).toBeVisible();
+
+  const reduced = await browser.newPage({ reducedMotion: 'reduce' });
+  await reduced.goto('/?to=Budi');
+  await reduced.waitForLoadState('load');
+  await expect(reduced.locator('[data-backdrop-video]')).not.toHaveAttribute('src', /.+/);
+  await reduced.close();
+});
+
 test('direct section links open without autoplay and reduced motion skips reveals', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/#rsvp');

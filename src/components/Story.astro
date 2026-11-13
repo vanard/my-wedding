@@ -4,7 +4,6 @@ import { invitation } from '../content/invitation';
 const { story, couple } = invitation;
 ---
 <section id="story" class="section" aria-labelledby="story-heading">
-  <div class="bg blur"><Photo photo={story.background} widths={[480]} /></div>
   <div class="photos" data-reveal>
     {story.photos.map((photo) => <Photo photo={photo} widths={[320, 480]} sizes="(min-width: 960px) 200px, 45vw" class="thumb" />)}
   </div>

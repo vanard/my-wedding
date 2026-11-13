@@ -1,9 +1,8 @@
 ---
-import Photo from './Photo.astro';
 import Icon from './Icon.astro';
 import { invitation } from '../content/invitation';
 import { calendarUrl, longDate, timeRange } from '../lib/format';
-const { events, timeZone, couple, photos } = invitation;
+const { events, timeZone, couple } = invitation;
 const first = events[0];
 const last = events[events.length - 1];
 const calendar = first && last ? calendarUrl({
@@ -15,7 +14,6 @@ const calendar = first && last ? calendarUrl({
 }) : null;
 ---
 <section id="event" class="section save" aria-labelledby="save-heading">
-  <div class="bg"><Photo photo={photos.saveTheDate} /></div>
   <div class="center" data-reveal>
     <h2 id="save-heading">Save the Date</h2>
     <p class="long-date">{longDate(invitation.startsAt, timeZone)}</p>
@@ -31,7 +29,6 @@ const calendar = first && last ? calendarUrl({
   </div>
 </section>
 <section class="section events" aria-label="Rangkaian acara">
-  <div class="bg"><Photo photo={photos.events} /></div>
   {events.map((event) => (
     <article class="event center" data-reveal>
       <p class="eyebrow">{event.eyebrow}</p>
@@ -47,13 +44,13 @@ const calendar = first && last ? calendarUrl({
   ))}
 </section>
 <style>
-  .save { --overlay: rgb(18 18 17 / 0.66); padding-block: 6rem; }
+  .save { padding-block: 6rem; }
   .long-date { font-size: .9rem; margin-bottom: 1.5rem; }
   .countdown { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 18rem; margin: 0 auto 2rem; }
   .countdown span { display: block; font-family: var(--font-display); font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
   .countdown small { font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
   .done { max-width: 18rem; margin: 0 auto 1.5rem; }
-  .events { --overlay: rgb(18 18 17 / 0.7); display: grid; gap: 4rem; padding-block: 5rem; }
+  .events { display: grid; gap: 4rem; padding-block: 5rem; }
   .event h3 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 2.2rem; font-size: clamp(1.9rem, 10cqi, 2.6rem); line-height: 1.05; margin: .3rem 0 .7rem; }
   .time { font-family: var(--font-display); font-size: 1.35rem; margin-bottom: .8rem; }
   .venue { font-weight: 700; margin-bottom: .2rem; }

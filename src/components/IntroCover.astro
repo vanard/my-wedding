@@ -1,12 +1,31 @@
 ---
-import Photo from './Photo.astro';
+import { getImage } from 'astro:assets';
 import { invitation } from '../content/invitation';
 import { coverDate } from '../lib/format';
 const { couple, photos, isPreview } = invitation;
 const date = coverDate(invitation.startsAt, invitation.timeZone);
+
+// Phones: the cover photo fills the screen. Desktop (960 px+): the cover photo is on the
+// left (DesktopAside), so this column shows the shared backdrop (photo-08, then the video).
+// The desktop <source> is a 1 px blank, so desktop browsers never download this image.
+// A landscape photo filling a portrait screen is drawn about 1.5× the screen height wide.
+const widths = [768, 1080, 1600, 2048].filter((width) => width <= photos.cover.src.width);
+const sizes = '(orientation: portrait) 150vh, 100vw';
+const [avif, webp, jpeg] = await Promise.all(
+  (['avif', 'webp', 'jpg'] as const).map((format) => getImage({ src: photos.cover.src, widths, format })),
+);
+const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 ---
 <header class="cover screen" id="cover">
-  <div class="bg"><Photo photo={photos.cover} priority /></div>
+  <div class="bg">
+    <picture>
+      <source media="(min-width: 960px)" srcset={blank} />
+      <source type="image/avif" srcset={avif!.srcSet.attribute} sizes={sizes} />
+      <source type="image/webp" srcset={webp!.srcSet.attribute} sizes={sizes} />
+      <img class="fill" src={jpeg!.src} srcset={jpeg!.srcSet.attribute} sizes={sizes} alt={photos.cover.alt} width={photos.cover.src.width} height={photos.cover.src.height}
+        fetchpriority="high" decoding="async" style={photos.cover.position ? `object-position: ${photos.cover.position}` : undefined} />
+    </picture>
+  </div>
   {isPreview && <p class="preview">Pratinjau · nama, tanggal &amp; foto masih sementara</p>}
   <div class="top">
     <p class="date eyebrow"><span>{date.dayMonth}</span><span>{date.year}</span></p>
@@ -31,4 +50,6 @@ const date = coverDate(invitation.startsAt, invitation.timeZone);
   .bottom .eyebrow { margin-bottom: .2rem; }
   .guest { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.2; margin-bottom: .6rem; overflow-wrap: anywhere; }
   .small { margin-bottom: 1.5rem; }
+  /* Desktop: the shared backdrop (already shaded) shows through instead of the cover photo. */
+  @media (min-width: 960px) { .cover > .bg { display: none; } }
 </style>
