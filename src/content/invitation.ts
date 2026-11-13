@@ -85,9 +85,9 @@ export const invitation: InvitationContent = {
     text: 'Cinta tidak saling menatap, tetapi bersama-sama memandang ke arah yang sama.',
     source: 'Antoine de Saint-Exupéry',
   },
-  // TEMPORARY DATE for layout and countdown preview only.
-  startsAt: '2027-02-20T08:00:00+07:00',
-  timeZone: 'Asia/Jakarta',
+  // Sunday 20 December 2026, Mataram (WITA, UTC+8).
+  startsAt: '2026-12-20T08:30:00+08:00',
+  timeZone: 'Asia/Makassar',
   people: [
     {
       label: 'Mempelai Pria',
@@ -119,25 +119,29 @@ export const invitation: InvitationContent = {
       { title: 'Bab empat: Hari pernikahan', text: 'Awal dari perjalanan baru yang akan kalian rayakan bersama keluarga dan sahabat.' },
     ],
   },
-  // TEMPORARY times and places. Use ISO timestamps with an offset.
+  // Use ISO timestamps with an offset.
   events: [
     {
       eyebrow: 'Prosesi',
       title: 'Akad Nikah',
-      startsAt: '2027-02-20T08:00:00+07:00',
-      endsAt: '2027-02-20T10:00:00+07:00',
-      venue: 'Lokasi akan diumumkan',
-      address: 'Alamat lengkap akan kami bagikan di sini.',
-      mapsUrl: null,
+      startsAt: '2026-12-20T08:30:00+08:00',
+      endsAt: '2026-12-20T09:30:00+08:00',
+      venue: 'Asrama Haji Mataram',
+      // Street address not supplied yet; add it here when available.
+      address: 'Mataram, Nusa Tenggara Barat',
+      // Search link; replace with the exact Google Maps share link (pin) when available.
+      mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Asrama+Haji+Mataram+NTB',
     },
     {
       eyebrow: 'Perayaan',
       title: 'Resepsi',
-      startsAt: '2027-02-20T11:00:00+07:00',
-      endsAt: '2027-02-20T14:00:00+07:00',
-      venue: 'Lokasi akan diumumkan',
-      address: 'Alamat lengkap akan kami bagikan di sini.',
-      mapsUrl: null,
+      startsAt: '2026-12-20T10:30:00+08:00',
+      endsAt: '2026-12-20T12:30:00+08:00',
+      venue: 'Asrama Haji Mataram',
+      // Street address not supplied yet; add it here when available.
+      address: 'Mataram, Nusa Tenggara Barat',
+      // Search link; replace with the exact Google Maps share link (pin) when available.
+      mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Asrama+Haji+Mataram+NTB',
     },
   ],
   // TEMPORARY palette.
