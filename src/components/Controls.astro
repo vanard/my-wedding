@@ -46,6 +46,9 @@ const links = [
   .chip small { display: block; font-size: .65rem; color: var(--muted); }
   .chip .name { display: block; font-size: .85rem; overflow-wrap: anywhere; }
   @keyframes drop { from { opacity: 0; transform: translateY(-10px); } }
+  /* Out of the way while the video clip is on screen (see src/scripts/video-clip.ts). */
+  :global(.clip-in-view) .menu-toggle, :global(.clip-in-view) .side { opacity: 0; visibility: hidden; pointer-events: none; }
+  .menu-toggle, .side { transition: opacity .25s ease, visibility .25s; }
   .side { position: fixed; z-index: 30; right: calc(.9rem + env(safe-area-inset-right)); bottom: calc(1rem + env(safe-area-inset-bottom)); display: grid; justify-items: end; gap: .6rem; }
   .shrink { display: none; }
   [aria-pressed='true'] .shrink { display: contents; }

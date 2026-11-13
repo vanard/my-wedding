@@ -127,3 +127,30 @@ test('access card shows a QR only for a well-formed personal code', async ({ pag
     await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeHidden();
   }
 });
+
+test('video clip in Our Moment downloads only after the guest presses play', async ({ page }) => {
+  const clipRequests: string[] = [];
+  page.on('request', (request) => { if (/video-clip\..*\.mp4/.test(request.url())) clipRequests.push(request.url()); });
+  await page.goto('/#gallery');
+  const play = page.getByRole('link', { name: /^Putar Video klip/ });
+  await expect(play).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  expect(clipRequests).toEqual([]);
+  await play.click();
+  const video = page.locator('#gallery video');
+  await expect(video).toHaveAttribute('src', /video-clip\..*\.mp4$/);
+  await expect(video).toBeFocused();
+  await expect(play).toHaveCount(0);
+});
+
+test('floating buttons step aside while the video clip is on screen', async ({ page }) => {
+  await page.goto('/?to=Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  const side = page.locator('[data-side-controls]');
+  await expect(side).toBeVisible();
+  await page.locator('[data-video-clip]').scrollIntoViewIfNeeded();
+  await expect(side).toBeHidden();
+  await page.locator('#rsvp').scrollIntoViewIfNeeded();
+  await expect(side).toBeVisible();
+});

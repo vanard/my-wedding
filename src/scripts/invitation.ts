@@ -7,6 +7,7 @@ import { initCopy } from './copy';
 import { initFullscreen } from './fullscreen';
 import { initBackdrop } from './backdrop';
 import { initAccessCard } from './access-card';
+import { initVideoClip } from './video-clip';
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -26,6 +27,7 @@ export function initInvitation() {
   document.querySelector('[data-access-open]')?.addEventListener('click', () => showAccessCard());
   initCountdown();
   initGallery();
+  initVideoClip();
   initCopy();
 
   let opened = false;

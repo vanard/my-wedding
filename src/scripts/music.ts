@@ -26,5 +26,7 @@ export function initMusic() {
   audio.addEventListener('error', () => { status.textContent = 'Musik tidak dapat dimuat. Coba lagi nanti.'; update(); });
   button.addEventListener('click', () => { if (audio.paused) play(); else audio.pause(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) audio.pause(); });
+  // Another sound source (the video clip) started: pause the music rather than play over it.
+  document.addEventListener('invitation:media-play', () => audio.pause());
   return { open(playMusic: boolean) { player.hidden = false; if (playMusic) play(); } };
 }
