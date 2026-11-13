@@ -1,6 +1,15 @@
 @import '@fontsource/italiana/400.css';
 @import './tokens.css';
 
+/* A simpler "&" for display text: only U+0026 comes from Marcellus (SIL OFL); every other
+   character stays Italiana. Browsers download this file only when an "&" is rendered. */
+@font-face {
+  font-family: 'Display Ampersand';
+  src: url('@fontsource/marcellus/files/marcellus-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0026;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: .9rem; line-height: 1.65; }
