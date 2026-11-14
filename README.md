@@ -65,8 +65,7 @@ controls appear after opening.
 
 Edit the typed content file. Anything still marked TEMPORARY there is a placeholder
 (none at the moment; check with
-`grep -n TEMPORARY src/content/invitation.ts`). Set `isPreview` to false only after
-replacing it.
+`grep -n TEMPORARY src/content/invitation.ts`).
 
 Photos: put originals in `src/assets/` (for example `src/assets/photos/`),
 import them in `invitation.ts` and assign them to `people`, `story`, `gallery`

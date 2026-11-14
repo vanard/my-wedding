@@ -73,8 +73,6 @@ export interface GiftAccount {
 }
 
 export interface InvitationContent {
-  /** Shows the "temporary content" notice. Set false only after replacing every placeholder. */
-  isPreview: boolean;
   couple: { first: string; second: string };
   /** The couple's hashtag, shown as the faint watermark in the hero. Written exactly as it should appear. */
   hashtag: string;
@@ -117,7 +115,6 @@ export interface InvitationContent {
 }
 
 export const invitation: InvitationContent = {
-  isPreview: true,
   couple: { first: 'Vian', second: 'Ghea' },
   hashtag: '#GHEArtofVIAN',
   greeting: 'Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.',

@@ -1,7 +1,7 @@
 ---
 import { invitation } from '../content/invitation';
 import { coverDate } from '../lib/format';
-const { couple, isPreview } = invitation;
+const { couple } = invitation;
 const date = coverDate(invitation.startsAt, invitation.timeZone);
 
 // No photo of its own: the shared backdrop (background.jpg, then the teaser video) shows
@@ -29,7 +29,6 @@ const date = coverDate(invitation.startsAt, invitation.timeZone);
   }
   /* While leaving, the cover floats over the revealed invitation and slides away. */
   .cover.is-leaving { position: fixed; z-index: 40; top: 0; right: 0; width: var(--col); height: 100vh; height: 100dvh; transition: transform .9s cubic-bezier(.7, 0, .2, 1), opacity .9s ease; transform: translateY(-100%); opacity: .4; }
-  .preview { position: absolute; top: calc(.5rem + env(safe-area-inset-top)); left: 0; right: 0; margin: 0; font-size: .62rem; letter-spacing: .08em; color: var(--muted); }
   .date { display: flex; justify-content: space-between; max-width: 15rem; margin: 0 auto 2.5rem; }
   /* Names on one line, sized to the column (cqi) so they fit from 320 px phones up. */
   h1 { font-size: 3rem; font-size: clamp(2.3rem, 12.5cqi, 4.6rem); white-space: nowrap; margin: .8rem 0 0; }
