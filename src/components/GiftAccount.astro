@@ -1,0 +1,33 @@
+---
+// One gift account row (bank, e-wallet or shipping address) with a copy button.
+// Used for the always-visible accounts and for the "lainnya" pop-up in Gifts.astro.
+import Icon from './Icon.astro';
+import type { GiftAccount } from '../content/invitation';
+interface Props { account: GiftAccount }
+const { account } = Astro.props;
+const icons = { bank: 'bank', wallet: 'wallet', address: 'gift' } as const;
+---
+<li>
+  <span class="icon"><Icon name={icons[account.kind]} size={22} /></span>
+  <div class="info">
+    <p class="provider">{account.provider}</p>
+    {account.holder && <p class="holder">{account.holder}</p>}
+    <p class="value">{account.value ?? 'Belum tersedia'}</p>
+  </div>
+  {account.value && (
+    <button type="button" class="copy" data-copy={account.value} data-copy-label={account.provider}>
+      <Icon name="copy" size={18} /><span class="sr-only">Salin {account.provider}</span>
+    </button>
+  )}
+</li>
+<style>
+  li { display: grid; grid-template-columns: 2.75rem 1fr auto; align-items: center; gap: .9rem; }
+  .icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 8px; background: rgb(244 240 232 / 0.12); }
+  .info { min-width: 0; }
+  .info p { margin: 0; }
+  .provider { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .holder { font-size: .82rem; }
+  .value { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+  .copy { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: inherit; }
+  .copy:hover { background: rgb(244 240 232 / 0.1); }
+</style>

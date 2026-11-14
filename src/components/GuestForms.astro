@@ -1,16 +1,25 @@
 ---
-// Forms are a visual foundation. They stay disabled until the API is implemented.
+// RSVP and wishes. Both forms work only from a personal invitation link (?k=<code>), which the
+// server checks (src/scripts/guest-forms.ts → api/). The list of approved wishes is public.
+// A group link (one link shared by many people) also asks each person for their own name.
+// Without JavaScript the forms stay disabled and the rest of the invitation stays readable.
+import { invitation } from '../content/invitation';
 ---
 <section id="rsvp" class="section rsvp" aria-labelledby="rsvp-heading">
   <div class="center" data-reveal>
     <h2 id="rsvp-heading">RSVP</h2>
     <p class="small">Bagi tamu undangan yang akan hadir, mohon konfirmasi kehadiran melalui formulir berikut.</p>
-    <p class="notice" id="rsvp-note">Konfirmasi kehadiran belum dibuka. Silakan kembali setelah undangan lengkap tersedia.</p>
   </div>
   <form aria-describedby="rsvp-note" data-rsvp-form>
-    <fieldset disabled>
+    <p class="notice" id="rsvp-note" data-rsvp-note>Konfirmasi kehadiran tersedia melalui tautan undangan pribadi Anda.</p>
+    <p class="party glass" data-rsvp-party hidden><span class="eyebrow" data-rsvp-party-label>Atas nama</span><strong data-rsvp-party-name></strong></p>
+    <p class="notice" data-rsvp-group-note hidden>Tautan ini dibagikan untuk satu grup. Setiap tamu mengisi konfirmasinya masing-masing.</p>
+    <fieldset disabled data-rsvp-fields>
       <legend class="sr-only">Konfirmasi kehadiran</legend>
-      <div class="field"><label for="rsvp-name">Nama</label><input id="rsvp-name" name="name" autocomplete="name" maxlength="100" required /></div>
+      <div class="field" data-rsvp-name-field hidden>
+        <label for="rsvp-name">Nama Anda</label>
+        <input id="rsvp-name" name="respondentName" autocomplete="name" maxlength="100" disabled />
+      </div>
       <fieldset class="field">
         <legend>Konfirmasi kehadiran</legend>
         <div class="choices">
@@ -18,43 +27,58 @@
           <label><input type="radio" name="attendance" value="declined" /><span>Tidak hadir</span></label>
         </div>
       </fieldset>
-      <div class="field"><label for="party-size">Jumlah tamu yang hadir</label><input id="party-size" name="guestCount" type="number" inputmode="numeric" min="0" step="1" value="1" required /></div>
-      <button class="button block" type="submit">Kirim konfirmasi</button>
+      <div class="field" data-rsvp-count-field>
+        <label for="party-size">Jumlah tamu yang hadir</label>
+        <select id="party-size" name="guestCount" data-rsvp-count><option value="1">1 orang</option></select>
+      </div>
+      <button class="button block" type="submit" data-rsvp-submit>Kirim konfirmasi</button>
     </fieldset>
+    <button class="button block retry" type="button" data-rsvp-retry hidden>Muat ulang data undangan</button>
     <p class="status" role="status" data-rsvp-status></p>
   </form>
 </section>
-<section id="wishes" class="section wishes" aria-labelledby="wishes-heading">
+<section id="wishes" class="section wishes" aria-labelledby="wishes-heading" data-time-zone={invitation.timeZone}>
   <div class="center" data-reveal>
     <h2 id="wishes-heading">Wishes</h2>
     <p class="small">Terima kasih telah memberikan ucapan, doa, dan harapan terbaik untuk perjalanan baru kami.</p>
   </div>
   <form aria-describedby="wishes-note" data-wishes-form>
-    <p id="wishes-note" class="notice">Buku tamu belum dibuka.</p>
-    <fieldset disabled>
+    <p id="wishes-note" class="notice" data-wishes-note>Ucapan dapat dikirim melalui tautan undangan pribadi Anda.</p>
+    <fieldset disabled data-wishes-fields>
       <legend class="sr-only">Tulis ucapan</legend>
       <div class="field"><label for="wish-name">Nama</label><input id="wish-name" name="name" autocomplete="name" maxlength="100" required /></div>
       <div class="field"><label for="wish-message">Doa &amp; ucapan</label><textarea id="wish-message" name="message" rows="4" maxlength="1000" required></textarea></div>
-      <button class="button block" type="submit">Kirim ucapan</button>
+      <button class="button block" type="submit" data-wishes-submit>Kirim ucapan</button>
     </fieldset>
     <p class="status" role="status" data-wishes-status></p>
   </form>
-  <div class="list" data-wishes-list aria-live="polite">
-    <p class="empty glass">Ucapan akan ditampilkan di sini setelah buku tamu dibuka.</p>
+  <div class="list" data-wishes-list>
+    <p class="empty glass" data-wishes-empty>Ucapan dari para tamu akan tampil di sini.</p>
   </div>
   <button class="button block" type="button" data-wishes-more hidden>Muat ucapan lainnya</button>
+  <p class="status center" role="status" data-wishes-list-status></p>
 </section>
 <style>
   .rsvp, .wishes { background: rgb(18 18 17 / 0.3); }
   form { margin-top: 1.5rem; }
-  .notice { font-size: .78rem; color: var(--muted); margin: 1rem 0 0; }
+  fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+  fieldset:disabled { opacity: .6; }
+  .notice { font-size: .78rem; color: var(--muted); margin: 0 0 1rem; text-align: center; }
+  .party { display: grid; gap: .2rem; margin: 0 0 1.25rem; padding: .9rem 1rem; border-radius: 8px; text-align: center; }
+  .party strong { font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
   .choices label { position: relative; margin: 0; }
   .choices input { position: absolute; opacity: 0; width: 100%; height: 100%; min-height: 0; margin: 0; }
   .choices span { display: grid; place-items: center; min-height: 44px; border: 1px solid rgb(244 240 232 / 0.7); border-radius: 6px; font-size: .78rem; font-weight: 700; }
   .choices input:checked + span { background: var(--ink); color: var(--bg); }
   .choices input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .list { margin-top: 2rem; }
+  select { width: 100%; min-height: 44px; padding: .7rem .85rem; border: 1px solid transparent; border-radius: 6px; background: rgb(244 240 232 / 0.92); color: #1f1f1e; }
+  .retry { margin-top: .5rem; }
+  .list { display: grid; gap: .75rem; margin-top: 2rem; }
   .empty { margin: 0; padding: 1rem; border-radius: 8px; font-size: .8rem; text-align: center; }
+  .list :global(.wish) { margin: 0; padding: 1rem 1.1rem; border-radius: 8px; }
+  .list :global(.wish-name) { margin: 0; font-weight: 700; font-size: .85rem; overflow-wrap: anywhere; }
+  .list :global(.wish-message) { margin: .35rem 0 .5rem; font-size: .82rem; white-space: pre-line; overflow-wrap: anywhere; }
+  .list :global(time) { font-size: .68rem; color: var(--muted); }
   [data-wishes-more] { margin-top: 1rem; }
 </style>

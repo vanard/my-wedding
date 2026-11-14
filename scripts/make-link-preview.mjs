@@ -4,7 +4,7 @@
 // Usage: npm run media:preview [-- <photo> [vertical position 0–1, default 0.45]]
 import sharp from 'sharp';
 
-const source = process.argv[2] ?? 'src/assets/media/album/img_4303.jpg';
+const source = process.argv[2] ?? 'src/assets/media/img_4303.jpg';
 const position = Number(process.argv[3] ?? 0.45);
 const target = 'src/assets/media/link-preview.jpg';
 const W = 1200, H = 630, TALLEST = 5 / 4;

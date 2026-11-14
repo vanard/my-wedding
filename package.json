@@ -12,7 +12,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "media:photos": "node scripts/optimize-photos.mjs",
-    "media:preview": "node scripts/make-link-preview.mjs"
+    "media:preview": "node scripts/make-link-preview.mjs",
+    "guests": "node scripts/guests.mjs",
+    "test:api": "playwright test --config playwright.api.config.ts"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "5.3.0",
@@ -22,6 +24,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@playwright/test": "^1.63.0",
+    "@types/node": "22.20.5",
     "sharp": "0.35.4",
     "typescript": "~5.9.3"
   }

@@ -28,6 +28,6 @@ const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAA
     .desk { display: block; position: fixed; top: 0; bottom: 0; left: 0; right: var(--col); overflow: hidden; background: var(--bg-raised); }
     .desk::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(18 18 17 / 0.1) 40%, rgb(18 18 17 / 0.7)); }
     .desk-text { position: absolute; z-index: 1; left: clamp(2rem, 5vw, 5rem); bottom: clamp(2rem, 7vh, 5rem); right: 2rem; }
-    .names { font-family: var(--font-display); font-size: clamp(3rem, 5.5vw, 6rem); line-height: 1; margin: .5rem 0 0; }
+    .names { font-family: var(--font-display); font-size: clamp(3rem, 5.5vw, 6rem); line-height: 1; white-space: nowrap; margin: .5rem 0 0; }
   }
 </style>

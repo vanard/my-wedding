@@ -2,6 +2,14 @@
 import Photo from './Photo.astro';
 import Icon from './Icon.astro';
 import { invitation } from '../content/invitation';
+
+// Instagram handles may be written with or without "@" in the content file.
+const handle = (value: string | null) => {
+  const name = value?.trim().replace(/^@/, '') ?? '';
+  return /^[A-Za-z0-9._]{1,30}$/.test(name) ? name : null;
+};
+// "Bapak A & Ibu B" shows as two lines, breaking before "&".
+const parentLines = (text: string) => text.split(/\s+&\s+/);
 ---
 <section id="couple" aria-labelledby="couple-heading">
   <h2 id="couple-heading" class="sr-only">Mempelai</h2>
@@ -13,10 +21,10 @@ import { invitation } from '../content/invitation';
         <h3>{person.fullName}</h3>
         <span class="line" aria-hidden="true"></span>
         <p class="eyebrow parent">{person.parentLine}</p>
-        <p class="parents">{person.parents}</p>
-        {person.instagram && (
-          <a class="pill" href={`https://instagram.com/${encodeURIComponent(person.instagram)}`} target="_blank" rel="noopener noreferrer">
-            <Icon name="instagram" size={16} />@{person.instagram}<span class="sr-only"> (Instagram, tab baru)</span>
+        <p class="parents">{parentLines(person.parents).map((line, i) => i === 0 ? line : <><br />&amp; {line}</>)}</p>
+        {handle(person.instagram) && (
+          <a class="pill" href={`https://www.instagram.com/${handle(person.instagram)}/`} target="_blank" rel="noopener noreferrer">
+            <Icon name="instagram" size={18} />@{handle(person.instagram)}<span class="sr-only"> (Instagram, tab baru)</span>
           </a>
         )}
       </div>
@@ -29,5 +37,6 @@ import { invitation } from '../content/invitation';
   .line { display: block; width: 2.5rem; height: 1px; background: var(--ink); margin-bottom: .9rem; }
   .parent { letter-spacing: .12em; margin-bottom: .2rem; }
   .parents { margin-bottom: 1rem; color: var(--muted); }
-  .pill { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; padding: 0 1rem; border: 1px solid var(--line); border-radius: 99px; font-size: .78rem; text-decoration: none; }
+  .pill { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 1.2rem; border: 1px solid rgb(244 240 232 / 0.75); border-radius: 99px; background: rgb(20 20 19 / 0.35); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ink); font-size: .8rem; font-weight: 600; letter-spacing: .02em; text-decoration: none; transition: background-color .2s, color .2s; }
+  .pill:hover { background: var(--ink); color: var(--bg); }
 </style>

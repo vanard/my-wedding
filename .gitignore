@@ -11,3 +11,7 @@ test-results/
 
 # Camera originals (large, private metadata). Web versions live in src/assets/media/.
 media-originals/
+.mcp.json
+
+# Guest list, personal links and exports (names, private codes). Never commit or deploy.
+private/

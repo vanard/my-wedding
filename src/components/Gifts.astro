@@ -1,8 +1,12 @@
 ---
+// Wedding Gift. The main accounts are always listed. Further accounts open in a pop-up from
+// a button (src/scripts/gift-more.ts moves the list into the dialog). Without JavaScript or
+// <dialog> support, that list simply stays visible below the main accounts.
 import Icon from './Icon.astro';
+import GiftAccount from './GiftAccount.astro';
 import { invitation } from '../content/invitation';
 const { gifts } = invitation;
-const icons = { bank: 'bank', wallet: 'wallet', address: 'gift' } as const;
+const more = gifts?.more ?? [];
 ---
 {gifts && (
   <section id="gift" class="section gift" aria-labelledby="gift-heading">
@@ -11,33 +15,49 @@ const icons = { bank: 'bank', wallet: 'wallet', address: 'gift' } as const;
       <p class="muted small">{gifts.text}</p>
     </div>
     <ul data-reveal>
-      {gifts.accounts.map((account) => (
-        <li>
-          <span class="icon"><Icon name={icons[account.kind]} size={22} /></span>
-          <div class="info">
-            <p class="provider">{account.provider}</p>
-            <p class="holder">{account.holder}</p>
-            <p class="value">{account.value ?? 'Belum tersedia'}</p>
-          </div>
-          {account.value && (
-            <button type="button" class="copy" data-copy={account.value} data-copy-label={account.provider}>
-              <Icon name="copy" size={18} /><span class="sr-only">Salin {account.provider}</span>
-            </button>
-          )}
-        </li>
-      ))}
+      {gifts.accounts.map((account) => <GiftAccount account={account} />)}
     </ul>
+    {more.length > 0 && (
+      <div class="more" data-gift-more>
+        <h3 class="more-title">Rekening &amp; dompet digital lainnya</h3>
+        <ul data-gift-more-list>
+          {more.map((account) => <GiftAccount account={account} />)}
+        </ul>
+      </div>
+      <button type="button" class="button block more-open" aria-haspopup="dialog" data-gift-more-open hidden>
+        Lihat rekening lainnya
+      </button>
+    )}
     <p class="status center" role="status" data-copy-status></p>
   </section>
 )}
+{more.length > 0 && (
+  <dialog class="sheet" aria-labelledby="gift-more-heading" data-gift-dialog>
+    <div class="card">
+      <button type="button" class="close" data-gift-close><Icon name="close" /><span class="sr-only">Tutup</span></button>
+      <p class="eyebrow">Wedding Gift</p>
+      <h2 id="gift-more-heading" class="sheet-title">Rekening &amp; Dompet Digital</h2>
+      <div data-gift-dialog-body></div>
+      <p class="status center" role="status" data-copy-status></p>
+    </div>
+  </dialog>
+)}
 <style>
   ul { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1.2rem; }
-  li { display: grid; grid-template-columns: 2.75rem 1fr auto; align-items: center; gap: .9rem; }
-  .icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 8px; background: rgb(244 240 232 / 0.12); }
-  .info p { margin: 0; }
-  .provider { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-  .holder { font-size: .82rem; }
-  .value { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
-  .copy { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; }
-  .copy:hover { background: rgb(244 240 232 / 0.1); }
+  .more { margin-top: 2rem; }
+  .more-title { margin: 0; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+  .more ul { margin-top: 1.2rem; }
+  .more-open { margin-top: 1.75rem; }
+
+  .sheet { width: min(calc(100vw - 2rem), 24rem); max-height: calc(100dvh - 2rem); margin: auto; padding: 0; border: 0; background: transparent; color: var(--ink); overflow: auto; }
+  .sheet::backdrop { background: rgb(12 12 11 / 0.8); }
+  .sheet[open] { animation: rise .35s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+  @media (prefers-reduced-motion: reduce) { .sheet[open] { animation: none; } }
+  .card { position: relative; padding: 2rem 1.4rem 1.2rem; border-radius: 14px; background: rgb(31 31 30 / 0.97); border: 1px solid rgb(244 240 232 / 0.18); box-shadow: 0 24px 60px rgb(0 0 0 / 0.45); }
+  .card .eyebrow { margin-bottom: .4rem; text-align: center; }
+  .sheet-title { margin: 0; font-size: 2rem; text-align: center; text-transform: none; }
+  .card ul { margin-top: 1.5rem; }
+  .close { position: absolute; top: .4rem; right: .4rem; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: var(--ink); }
+  .close:hover { background: rgb(244 240 232 / 0.1); }
 </style>

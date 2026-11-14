@@ -1,6 +1,8 @@
 # Never upload these with `vercel` CLI deploys (Git deploys only see committed files).
 # Camera originals: ~800 MB, private metadata (GPS, camera), and over the CLI upload limit.
 media-originals/
+# Guest list, personal links and exports.
+private/
 .env
 .env.*
 !.env.example

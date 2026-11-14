@@ -2,16 +2,16 @@
 import Icon from './Icon.astro';
 import { invitation } from '../content/invitation';
 import { coverDate } from '../lib/format';
-const { couple, quote } = invitation;
+const { couple, quote, hashtag } = invitation;
 const date = coverDate(invitation.startsAt, invitation.timeZone);
 ---
 <section id="home" class="hero screen" aria-labelledby="hero-heading">
   <div class="top">
     <p class="date eyebrow"><span>{date.dayMonth}</span><span>{date.year}</span></p>
     <p class="eyebrow">The wedding of</p>
-    <h2 id="hero-heading">{couple.first} &amp;<br />{couple.second}</h2>
+    <h2 id="hero-heading">{couple.first} &amp; {couple.second}</h2>
   </div>
-  <p class="ghost" aria-hidden="true">{couple.first} // {couple.second}</p>
+  <p class="ghost" aria-hidden="true">{hashtag}</p>
   <div class="bottom" data-reveal>
     <blockquote>
       <p>“{quote.text}”</p>
@@ -23,8 +23,9 @@ const date = coverDate(invitation.startsAt, invitation.timeZone);
 <style>
   .hero { background: linear-gradient(180deg, rgb(18 18 17 / 0.3), transparent 45%, rgb(18 18 17 / 0.5)); position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: calc(5rem + env(safe-area-inset-top)) var(--gutter) 1.5rem; text-align: center; }
   .date { display: flex; justify-content: space-between; max-width: 15rem; margin: 0 auto 2.5rem; }
-  h2 { font-size: 3.6rem; font-size: clamp(3rem, 17cqi, 4.4rem); text-transform: none; margin: .8rem 0 0; }
-  .ghost { position: absolute; left: 0; right: 0; top: 52%; margin: 0; font-family: var(--font-display); font-size: 2.2rem; font-size: clamp(1.8rem, 10cqi, 2.6rem); letter-spacing: .3em; text-transform: uppercase; white-space: nowrap; color: rgb(244 240 232 / 0.18); pointer-events: none; }
+  /* One line, like the opening cover: sized to the column so it fits from 320 px phones up. */
+  h2 { font-size: 3rem; font-size: clamp(2.3rem, 12.5cqi, 4.6rem); white-space: nowrap; text-transform: none; margin: .8rem 0 0; }
+  .ghost { position: absolute; left: 0; right: 0; top: 52%; margin: 0; font-family: var(--font-display); font-size: 2.2rem; font-size: clamp(1.8rem, 10cqi, 2.6rem); letter-spacing: .12em; white-space: nowrap; color: rgb(244 240 232 / 0.18); pointer-events: none; }
   blockquote { margin: 0 auto 1rem; max-width: 22rem; font-size: .78rem; font-weight: 600; }
   blockquote p { margin-bottom: .5rem; }
   blockquote footer { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }

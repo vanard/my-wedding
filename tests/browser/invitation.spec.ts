@@ -20,7 +20,7 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   await expect(card).toBeHidden();
   await expect(page.locator('main')).toBeFocused();
   await expect(page.locator('[data-music-player]')).toBeVisible();
-  await expect(page.locator('[data-music-toggle]')).toBeDisabled();
+  await expect(page.locator('[data-music-toggle]')).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Kirim konfirmasi' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Kirim ucapan' })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -81,11 +81,34 @@ test('requests music from the opening gesture and reports rejected playback', as
       return Promise.reject(new DOMException('Blocked in test', 'NotAllowedError'));
     };
   });
+  const audioRequests: string[] = [];
+  page.on('request', (request) => { if (request.url().includes('/audio/')) audioRequests.push(request.url()); });
   await page.goto('/');
-  await page.locator('audio').evaluate((audio) => audio.setAttribute('src', '/audio/test.mp3'));
+  // The soundtrack is configured but not downloaded before the guest opens the invitation.
+  await expect(page.locator('audio')).toHaveAttribute('src', '/audio/music.mp3');
+  // Not 'networkidle': the background video keeps streaming.
+  await page.waitForLoadState('load');
+  await page.waitForTimeout(1000);
+  expect(audioRequests).toEqual([]);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await expect(page.locator('[data-music-status]')).toHaveText('Ketuk tombol untuk memutar musik.');
   await expect(page.locator('main')).toBeVisible();
+});
+
+test('the soundtrack file is served and plays as audio', async ({ page, browserName }) => {
+  const response = await page.request.get('/audio/music.mp3');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('audio/mpeg');
+  // Chromium in Playwright lacks proprietary codecs; WebKit decodes MP3 like real browsers.
+  test.skip(browserName === 'chromium', 'MP3 decoding is checked in WebKit');
+  await page.goto('/');
+  const duration = await page.locator('audio').evaluate((audio: HTMLAudioElement) => new Promise<number>((resolve, reject) => {
+    audio.preload = 'metadata';
+    audio.addEventListener('loadedmetadata', () => resolve(audio.duration), { once: true });
+    audio.addEventListener('error', () => reject(new Error('audio error')), { once: true });
+    audio.load();
+  }));
+  expect(duration).toBeGreaterThan(110);
 });
 
 test('countdown stops gracefully once the event has started', async ({ page }) => {
@@ -186,7 +209,60 @@ test('album is shuffled so photos from the same moment never touch, and the view
   expect(touching).toBe(0);
   const third = page.locator('[data-gallery-item]').nth(2);
   const href = await third.getAttribute('href');
+  // Photos do not enlarge on hover.
+  await third.hover();
+  expect(await third.locator('img').evaluate((img) => getComputedStyle(img).transform)).toBe('none');
   await third.click();
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^3 \/ \d+$/);
   expect(await page.locator('[data-lightbox-image]').getAttribute('src')).toContain(href!);
+
+  // The viewer is a slideshow only: no pinch/double-tap zoom, no trackpad (ctrl + wheel) zoom.
+  const viewer = page.locator('[data-lightbox]');
+  expect(await viewer.evaluate((dialog) => getComputedStyle(dialog).touchAction)).toBe('none');
+  expect(await viewer.evaluate((dialog) => {
+    const wheel = new WheelEvent('wheel', { ctrlKey: true, deltaY: -10, bubbles: true, cancelable: true });
+    return dialog.querySelector('img')!.dispatchEvent(wheel);
+  })).toBe(false);
+  await page.getByRole('button', { name: 'Foto berikutnya' }).click();
+  await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
+});
+
+test('more gift accounts open in a pop-up with their own copy status, and close back to the button', async ({ page, context, browserName }) => {
+  if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.keyboard.press('Escape'); // close the Entry Access Card
+  const gift = page.locator('#gift');
+  await gift.scrollIntoViewIfNeeded();
+  await expect(gift.getByText('Superbank', { exact: true })).toBeVisible();
+  // The extra accounts are not in the page itself, only behind the button.
+  await expect(gift.getByText('Mandiri', { exact: true })).toHaveCount(0);
+
+  const open = page.getByRole('button', { name: 'Lihat rekening lainnya' });
+  await open.click();
+  const sheet = page.getByRole('dialog', { name: 'Rekening & Dompet Digital' });
+  await expect(sheet).toBeVisible();
+  for (const text of ['Mandiri', '1310015634357', 'BCA', '0700237524', 'Seabank', '901279716707', '082237058889']) {
+    await expect(sheet.getByText(text, { exact: true })).toBeVisible();
+  }
+  await sheet.getByRole('button', { name: 'Salin BCA' }).click();
+  // Copied, or the manual fallback where the clipboard is unavailable; shown inside the pop-up either way.
+  await expect(sheet.locator('[data-copy-status]')).toContainText(/BCA berhasil disalin|0700237524/);
+  if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('0700237524');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(open).toBeFocused();
+});
+
+test('without JavaScript the extra gift accounts are listed in the page', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
+  const page = await context.newPage();
+  await page.goto('http://127.0.0.1:4322/');
+  const gift = page.locator('#gift');
+  await expect(gift.getByText('1310015634357')).toBeVisible();
+  await expect(gift.getByText('082237058889')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeHidden();
+  await context.close();
 });

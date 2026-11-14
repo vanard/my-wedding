@@ -1,0 +1,78 @@
+---
+// Staff check-in at the venue. A guest's Entry Access Card QR opens /checkin/#<code>; the
+// staff phone (signed in once with the staff key) confirms the arrival through /api/checkin.
+// Guests who open this page see only the staff sign-in.
+import InvitationLayout from '../layouts/InvitationLayout.astro';
+import { invitation } from '../content/invitation';
+const { couple } = invitation;
+---
+<InvitationLayout title={`Check-in Tamu · ${couple.first} & ${couple.second}`} description="Halaman penerima tamu." skipLink={false}>
+  <main class="checkin" data-checkin data-time-zone={invitation.timeZone}>
+    <header class="center">
+      <p class="eyebrow">Penerima Tamu</p>
+      <h1>{couple.first} &amp; {couple.second}</h1>
+    </header>
+    <noscript><p class="panel glass center">Halaman ini memerlukan JavaScript.</p></noscript>
+
+    <form class="panel glass" data-staff-login hidden>
+      <p class="small">Halaman ini khusus untuk petugas penerima tamu. Tamu cukup menunjukkan kode QR pada Kartu Akses.</p>
+      <div class="field"><label for="staff-key">Kunci petugas</label><input id="staff-key" name="key" type="password" autocomplete="current-password" required /></div>
+      <button class="button block" type="submit">Masuk</button>
+      <p class="status" role="status" data-login-status></p>
+    </form>
+
+    <div data-staff hidden>
+      <section class="panel result" data-result hidden aria-live="polite">
+        <p class="eyebrow" data-result-title></p>
+        <p class="name" data-result-name></p>
+        <dl>
+          <div><dt>Konfirmasi</dt><dd data-result-rsvp></dd></div>
+          <div><dt>Jatah undangan</dt><dd data-result-allowance></dd></div>
+          <div><dt>Check-in</dt><dd data-result-time></dd></div>
+        </dl>
+      </section>
+      <p class="status center" role="status" data-checkin-status></p>
+
+      <section class="panel glass">
+        <h2>Pindai kode QR</h2>
+        <p class="small">Buka kamera ponsel, arahkan ke kode QR pada Kartu Akses tamu, lalu ketuk tautan yang muncul. Kedatangan tercatat otomatis di halaman ini.</p>
+      </section>
+
+      <form class="panel glass" data-search>
+        <h2>Cari nama tamu</h2>
+        <p class="small">Untuk tamu yang tidak membawa kode QR.</p>
+        <div class="field"><label for="search-name">Nama</label><input id="search-name" name="query" minlength="2" maxlength="100" autocomplete="off" required /></div>
+        <button class="button block" type="submit">Cari</button>
+        <p class="status" role="status" data-search-status></p>
+        <ul class="hits" data-search-results></ul>
+      </form>
+
+      <button class="button block quiet" type="button" data-staff-logout>Keluar dari perangkat ini</button>
+    </div>
+  </main>
+  <script>
+    import { initCheckIn } from '../scripts/checkin';
+    initCheckIn();
+  </script>
+</InvitationLayout>
+<style>
+  .checkin { max-width: 30rem; margin: 0 auto; padding: calc(2.5rem + env(safe-area-inset-top)) var(--gutter) calc(2.5rem + env(safe-area-inset-bottom)); }
+  h1 { font-size: 2.6rem; margin: .5rem 0 1.5rem; }
+  h2 { font-size: 1.6rem; margin: 0 0 .5rem; }
+  .panel { margin: 0 0 1rem; padding: 1.25rem; border-radius: 10px; }
+  .result { text-align: center; border: 2px solid var(--line); background: var(--bg-raised); }
+  .result[data-state='ok'] { border-color: #8fc79a; background: rgb(48 82 56 / 0.85); }
+  .result[data-state='already'] { border-color: #e5c07b; background: rgb(96 74 30 / 0.85); }
+  .result[data-state='error'] { border-color: #e08b7d; background: rgb(96 40 34 / 0.85); }
+  .name { font-family: var(--font-display); font-size: 2.2rem; line-height: 1.1; margin: .3rem 0 1rem; overflow-wrap: anywhere; }
+  dl { display: grid; gap: .35rem; margin: 0; font-size: .85rem; }
+  dl div { display: flex; justify-content: space-between; gap: 1rem; text-align: left; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-weight: 700; text-align: right; }
+  .hits { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .5rem; }
+  .hits :global(li) { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .6rem 0; border-top: 1px solid var(--line); }
+  .hits :global(.hit-name) { font-weight: 700; overflow-wrap: anywhere; }
+  .hits :global(.hit-meta) { display: block; font-size: .72rem; color: var(--muted); font-weight: 400; }
+  .hits :global(.button) { flex: none; padding-inline: 1rem; }
+  .quiet { border-color: var(--line); color: var(--muted); }
+</style>

@@ -1,7 +1,7 @@
 # Lamaran
 
-Static Astro invitation with scoped CSS, TypeScript, Vercel API boundaries, and a
-Supabase schema foundation. Names and details are explicitly temporary.
+Static Astro invitation with scoped CSS and TypeScript, plus Vercel Functions and
+Supabase for RSVP, wishes and venue check-in. Placeholder texts are marked TEMPORARY.
 
 ## Run locally
 
@@ -27,8 +27,14 @@ Browser regression checks: `npx playwright test` (after `npm run build`). Instal
 the required browsers with `npx playwright install chromium webkit` if needed.
 These checks cover Chromium at phone width, desktop WebKit, reduced motion,
 no-JavaScript access, greeting escaping, rejected audio playback, the countdown
-ending, and menu keyboard behavior. They do not
-replace real iPhone/Android or real-song playback checks.
+ending, menu keyboard behavior, and the RSVP/wishes/check-in pages (with the API
+answered in the browser). They do not replace real iPhone/Android or real-song playback checks.
+
+Endpoint checks: `npm run test:api` runs the `api/` handlers in Node with Supabase
+replaced by a fake (authorization, validation, size limits, error mapping, caching).
+Database checks in `tests/db/` run only when `TEST_SUPABASE_URL`,
+`TEST_SUPABASE_SECRET_KEY` and `TEST_SUPABASE_PUBLISHABLE_KEY` point at a **test**
+project (concurrent RSVPs, duplicate wishes, rate limits, browser-key lockout).
 
 ## Design
 
@@ -49,15 +55,18 @@ controls appear after opening.
 - `src/components/`: one component per section, plus `Photo` (responsive AVIF/WebP) and `Icon`.
 - `src/styles/`: dark theme tokens and base styles; component CSS is scoped.
 - `src/scripts/`: opening, menu, countdown, gallery lightbox, copy, fullscreen, music and reveals.
-- `src/lib/contracts.ts`: planned request/response types.
-- `api/`: Vercel Function placeholders that return 503, never fake success.
-- `supabase/migrations/`: private tables, RSVP uniqueness, constraints and RLS.
+- `src/lib/contracts.ts`: request/response types shared by `api/` and the browser scripts.
+- `src/pages/checkin.astro`: venue staff page opened by the Entry Access Card QR.
+- `api/`: Vercel Functions (`guest`, `rsvp`, `wishes`, `checkin`); `api/_lib/` holds shared helpers.
+- `supabase/migrations/`: tables, constraints, RLS and the server-only SQL functions.
+- `scripts/guests.mjs`: owner tool to import the guest list, create personal links and export.
 
 ## Content and audio
 
-Edit the typed content file. Everything marked TEMPORARY (date, times, venues,
-quote, story, parents, dress-code palette, gift accounts and all photos) is a
-placeholder. Set `isPreview` to false only after replacing it.
+Edit the typed content file. Anything still marked TEMPORARY there is a placeholder
+(currently the opening quote and the dress-code palette; check with
+`grep -n TEMPORARY src/content/invitation.ts`). Set `isPreview` to false only after
+replacing it.
 
 Photos: put originals in `src/assets/` (for example `src/assets/photos/`),
 import them in `invitation.ts` and assign them to `people`, `story`, `gallery`
@@ -66,40 +75,88 @@ around 2000 px on the long edge are enough. Use `position` to adjust cropping.
 Set `liveStream`, `dressCode`, `closingQuote` or `gifts` to `null` to hide a section.
 A gift account with `value: null` shows "Belum tersedia" and no copy button.
 
-Place a licensed MP3 in `public/audio/` and set `music.src`. No audio file is
-supplied; the player stays disabled until configured. Music pauses when the tab
-is hidden and requires a tap to resume. The display font (Cormorant Garamond,
+Music: `public/audio/music.mp3`, the full audio track of the prewedding video clip
+(≈1.8 MB, see `public/audio/README.md`). It starts from the "Buka Undangan" tap, is not
+preloaded, pauses when the tab is hidden or the video clip plays, and requires a tap to
+resume. `music.src: null` disables the player. The display font (Cormorant Garamond,
 SIL OFL) is self-hosted via `@fontsource/cormorant-garamond`; body text uses system fonts.
 
-## RSVP and wishes: prepared, not connected
+## RSVP, wishes and check-in
 
-Forms are intentionally disabled and endpoints return `NOT_READY`. No guest data
-is stored yet. Astro dev/preview serve the static site, not the root `api/`
-functions; use Vercel's local runtime or a preview deployment when integrating APIs.
+How it works:
 
-Before enabling forms:
+- Each invited party (a person or a family) gets a personal link
+  `/?to=<name>&k=<code>`. `to` is only the greeting on the cover; `k` is a random
+  43-character code. The database stores only its SHA-256 hash.
+- **RSVP**: one current response per party (hadir + number of people up to the party's
+  allowance, or tidak hadir). Guests can change it later from the same link.
+- **Group links** (e.g. "Teman Kantor"): one link shared by many people. Each person enters
+  their own name and head count (at most `max_guests` per person), and the answers **add up**:
+  Budi 2 + Sari 1 = 3. The phone remembers its own answer, so the same person can change it
+  later; retries never count twice. Answering again from another phone counts as a new person.
+  A group accepts at most 300 answers, 200 wishes, and 60 RSVPs / 20 wishes per 10 minutes.
+  Its QR works for everyone in the group: staff see the group's totals, never "sudah check-in".
+- **Wishes**: sent from a personal link; shown on the site only after you approve them.
+  The approved list is public (name, message, date) and cached for about a minute.
+- **Entry Access Card**: its QR opens `/checkin/#<code>`. Staff phones signed in with
+  `CHECKIN_KEY` record the arrival; a second scan shows "Sudah check-in sebelumnya".
+  Staff can also search by name for guests without their QR.
+- Links without `k` (or opened by someone else) can read the invitation but cannot RSVP
+  or write wishes. Nothing contacts the database until a guest scrolls near the forms;
+  if the database is down, only these forms show an error.
+- Abuse limits live in the database (shared by all function instances): per party, 10 RSVP
+  changes and 3 wishes per 10 minutes, at most 10 wishes in total. Wrong codes are
+  rejected before any database work.
 
-1. Create a separate Supabase test project and apply the SQL migration there.
-2. Set server-only `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in the runtime environment.
-3. Implement token hashing/lookup, request validation and persistent rate limiting.
-   Resolve party allowance through an authorized private endpoint; never trust `?to=`.
-4. Implement atomic RSVP upserts, wish idempotency, and approved-wish cursor
-   pagination (20 by default, at most 50). Keep private responses uncached.
-5. Wire the forms through same-origin fetch requests, with pending/error/success
-   states, safe retries and preserved input on failure. Add authorization and
-   persistence tests against the test database before enabling submission.
-6. Add the owner's moderation/export workflow and verify backups and free-plan readiness.
+### Setup (once per Supabase project)
 
-The migration is not applied automatically. Tables are inaccessible to anonymous
-and authenticated browser roles. Server credentials bypass RLS and therefore require
-explicit authorization in every endpoint. No database integration or load test has
-been completed in this foundation.
+1. Apply `supabase/migrations/0001_invitation.sql`, `0002_guest_services.sql` and
+   `0003_group_invitations.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
+   Try it on a test project first.
+2. In Vercel → Settings → Environment Variables (Production, and Preview if used), add
+   `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Project Settings → API Keys → secret key) and
+   `CHECKIN_KEY` (generate as shown in `.env.example`). Redeploy afterwards.
+3. Create a local `.env` from `.env.example` with the same values plus `SITE_URL`.
+
+### Owner operations
+
+```sh
+# private/ is git-ignored and never deployed. Columns: name,max_guests[,group]
+npm run guests -- import private/guests.csv     # writes private/links-<time>.csv
+npm run guests -- reissue "Bapak Budi & Keluarga"  # new link; the old one stops working
+npm run guests -- export                        # attendance + wishes CSV backup in private/
+```
+
+- **Send links**: from `private/links-*.csv`. It is the only copy of the codes; keep it
+  private and backed up. Names must be unique, e.g. "Budi (Kantor)" and "Budi (SMA)".
+- **Group links**: add a `group` column and write `ya` on group rows, e.g.
+
+  ```csv
+  name,max_guests,group
+  Bapak Budi & Keluarga,4,
+  Teman Kantor,5,ya
+  ```
+
+  For a group, `max_guests` is the limit **per person who answers**. Share the group link in
+  that group's chat only: anyone who has it can answer. Answers per person:
+  `select * from private.group_responses;`
+- **Approve wishes**: Supabase → SQL Editor: `select * from private.wishes_to_review;`
+  then `update public.wishes set approved = true where id = '<id>';` (or toggle `approved`
+  in Table Editor → wishes). To hide one again, set it back to false.
+- **Attendance**: `select * from private.attendance_totals;` (`total_guests_attending`
+  includes group answers) and `select * from private.guest_overview;`, or
+  `npm run guests -- export` (one row per personal invitation and per group answer).
+- **Venue day**: give staff the `/checkin/` address and `CHECKIN_KEY`. Each staff phone
+  signs in once. Afterwards rotate `CHECKIN_KEY` in Vercel (and redeploy).
+- **Before sending invitations and before the event**: open the Supabase dashboard to make
+  sure the free project is not paused, run an export as a backup, and send yourself a test link.
 
 ## Deployment (Vercel)
 
 What gets deployed: the static site in `dist/` (built by `npm run build`) and the
-root `api/` files as Vercel Functions (currently fail-closed `503 NOT_READY`). No
-Astro server adapter and no environment variables are needed yet.
+root `api/` files as Vercel Functions. No Astro server adapter. The functions need
+the environment variables from "RSVP, wishes and check-in"; without them they answer
+`503 NOT_CONFIGURED` and the rest of the invitation works normally.
 
 ### First deployment
 
@@ -125,7 +182,9 @@ deployments only contain committed files.
 SITE=https://<project>.vercel.app
 curl -sI "$SITE/" | grep -i cache-control            # public, max-age=0, must-revalidate
 curl -sI "$SITE$(curl -s "$SITE/" | grep -o '/_astro/[^"]*\.css' | head -1)" | grep -i cache-control   # max-age=31536000, immutable
-curl -s -X POST "$SITE/api/rsvp"                      # {"error":{"code":"NOT_READY",...}} with status 503
+curl -s "$SITE/api/wishes"                            # {"wishes":[...],"next":...} (503 if not configured)
+curl -s -X POST "$SITE/api/rsvp"                      # 401 INVALID_TOKEN (no personal code)
+curl -s -X POST "$SITE/api/checkin" -H 'content-type: application/json' -d '{"ping":true}'   # 401 without the staff key
 curl -s -o /dev/null -w '%{http_code}\n' "$SITE/tidak-ada"   # 404 (styled page)
 curl -s "$SITE/" | grep -o '<meta property="og:image" content="[^"]*"'   # absolute https URL
 ```
@@ -145,9 +204,14 @@ Vercel Hobby is for personal, non-commercial use and includes per month about
 invocations; CLI uploads are limited to 100 MB. Sources:
 https://vercel.com/docs/limits and https://vercel.com/docs/limits/fair-use-guidelines.
 
-Rough transfer estimate per first visit: ≈5.5 MB (background video 4.9 MB, photos,
-fonts and scripts); the video clip streams from YouTube and adds nothing here.
-3,000 visits is roughly 17 GB; repeat visits reuse cached `/_astro/` files. These are estimates, not measurements or guarantees.
+Rough transfer estimate per first visit: ≈7.3 MB (background video 4.9 MB, music
+1.8 MB, photos, fonts and scripts); the video clip streams from YouTube and adds nothing
+here. 3,000 visits is roughly 22 GB; repeat visits reuse cached files. These are
+estimates, not measurements or guarantees.
+
+Budget exception: a full visit is above the 5 MB aim in `AGENTS.md`, mainly because of
+the background video and the music. Neither blocks the first screen (the video starts
+after the cover; the music only from the opening tap).
 
 Use the launch checklist and budgets in `AGENTS.md` before distributing links.
 Physical phone testing and the 1,000-guest/100-concurrent scenario remain launch checks.
