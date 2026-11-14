@@ -95,13 +95,60 @@ and authenticated browser roles. Server credentials bypass RLS and therefore req
 explicit authorization in every endpoint. No database integration or load test has
 been completed in this foundation.
 
-## Deployment
+## Deployment (Vercel)
 
-Import the GitHub repository into Vercel, select Astro and Node 22.x. Build with
-`npm run build`, output `dist`. Root `api/` functions deploy separately from the
-static pages. No Astro server adapter is needed. Set secrets only in Vercel, never
-in `PUBLIC_` variables. Keep preview and production databases separate.
+What gets deployed: the static site in `dist/` (built by `npm run build`) and the
+root `api/` files as Vercel Functions (currently fail-closed `503 NOT_READY`). No
+Astro server adapter and no environment variables are needed yet.
 
-No Git repository, remote, deployment, or paid service is created by this scaffold.
+### First deployment
+
+1. Merge the work into `main` and push it to GitHub (`origin`).
+2. On vercel.com (Hobby plan, personal account): **Add New → Project → Import**
+   `my-wedding`. Vercel detects Astro; build command and output come from
+   `vercel.json`, and Node 22.x from `engines` in `package.json`. Keep
+   **Settings → Environment Variables → Automatically expose System Environment
+   Variables** enabled: the link-preview image needs `VERCEL_PROJECT_PRODUCTION_URL`.
+3. Deploy. `main` becomes production (`<project>.vercel.app`); other branches get
+   preview deployments. Review **Settings → Deployment Protection** so previews are
+   not publicly shared by accident.
+4. Custom domain later (optional, paid separately): add it in Vercel, then set
+   `SITE_URL=https://your-domain` so link previews use it.
+
+Never deploy from this machine with the Vercel CLI without `.vercelignore` in place:
+`media-originals/` (≈800 MB, private photo metadata) must not be uploaded. Git
+deployments only contain committed files.
+
+### Checks after each production deploy
+
+```sh
+SITE=https://<project>.vercel.app
+curl -sI "$SITE/" | grep -i cache-control            # public, max-age=0, must-revalidate
+curl -sI "$SITE$(curl -s "$SITE/" | grep -o '/_astro/[^"]*\.css' | head -1)" | grep -i cache-control   # max-age=31536000, immutable
+curl -s -X POST "$SITE/api/rsvp"                      # {"error":{"code":"NOT_READY",...}} with status 503
+curl -s -o /dev/null -w '%{http_code}\n' "$SITE/tidak-ada"   # 404 (styled page)
+curl -s "$SITE/" | grep -o '<meta property="og:image" content="[^"]*"'   # absolute https URL
+```
+
+Then open `$SITE/?to=Nama%20Tamu` on a phone (cover, "Buka Undangan", background
+video, gallery, video clip) and send the link to yourself on WhatsApp to confirm the
+preview image. A local build is not a substitute for these checks.
+
+Caching: `/_astro/*` files have content hashes in their names and are cached for a
+year (`vercel.json`); HTML keeps Vercel's default `max-age=0, must-revalidate`, so a
+new deployment is visible immediately.
+
+### Free-plan limits (checked 2026-11-13; re-check before sending invitations)
+
+Vercel Hobby is for personal, non-commercial use and includes per month about
+100 GB Fast Data Transfer, 10 GB Fast Origin Transfer and 1,000,000 Function
+invocations; CLI uploads are limited to 100 MB. Sources:
+https://vercel.com/docs/limits and https://vercel.com/docs/limits/fair-use-guidelines.
+
+Rough transfer estimate per first visit: ≈5.5 MB (background video 4.9 MB, photos,
+fonts and scripts), plus 15.7 MB for each guest who plays the video clip. 3,000
+visits is roughly 17 GB, plus about 16 GB per 1,000 clip plays; repeat visits reuse
+cached `/_astro/` files. These are estimates, not measurements or guarantees.
+
 Use the launch checklist and budgets in `AGENTS.md` before distributing links.
 Physical phone testing and the 1,000-guest/100-concurrent scenario remain launch checks.
