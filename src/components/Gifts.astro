@@ -1,12 +1,13 @@
 ---
-// Wedding Gift. The main accounts are always listed. Further accounts open in a pop-up from
-// a button (src/scripts/gift-more.ts moves the list into the dialog). Without JavaScript or
+// Wedding Gift. The main accounts are always listed. Further accounts (when `showMore`) open in
+// a pop-up from a button (src/scripts/gift-more.ts moves the list into the dialog). Without JavaScript or
 // <dialog> support, that list simply stays visible below the main accounts.
 import Icon from './Icon.astro';
 import GiftAccount from './GiftAccount.astro';
 import { invitation } from '../content/invitation';
 const { gifts } = invitation;
-const more = gifts?.more ?? [];
+// Hidden accounts are not rendered at all, so they are not in the page source either.
+const more = gifts?.showMore ? gifts.more : [];
 ---
 {gifts && (
   <section id="gift" class="section gift" aria-labelledby="gift-heading">

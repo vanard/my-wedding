@@ -262,42 +262,26 @@ test('album is shuffled so photos from the same moment never touch, and the view
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
-test('more gift accounts open in a pop-up with their own copy status, and close back to the button', async ({ page, context, browserName }) => {
-  if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+test('only the main gift accounts are shown; the extra accounts and their button are hidden', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
   const gift = page.locator('#gift');
   await gift.scrollIntoViewIfNeeded();
   await expect(gift.getByText('Superbank', { exact: true })).toBeVisible();
-  // The extra accounts are not in the page itself, only behind the button.
-  await expect(gift.getByText('Mandiri', { exact: true })).toHaveCount(0);
-
-  const open = page.getByRole('button', { name: 'Lihat rekening lainnya' });
-  await open.click();
-  const sheet = page.getByRole('dialog', { name: 'Rekening & Dompet Digital' });
-  await expect(sheet).toBeVisible();
-  for (const text of ['Mandiri', '1310015634357', 'BCA', '0700237524', 'Seabank', '901279716707', '082237058889']) {
-    await expect(sheet.getByText(text, { exact: true })).toBeVisible();
-  }
-  await sheet.getByRole('button', { name: 'Salin BCA' }).click();
-  // Copied, or the manual fallback where the clipboard is unavailable; shown inside the pop-up either way.
-  await expect(sheet.locator('[data-copy-status]')).toContainText(/BCA berhasil disalin|0700237524/);
-  if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('0700237524');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-
-  await page.keyboard.press('Escape');
-  await expect(sheet).toBeHidden();
-  await expect(open).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
+  // Not just hidden: the extra account numbers are not in the page at all.
+  const html = await page.content();
+  for (const value of ['1310015634357', '0700237524', '901279716707', '082237058889']) expect(html).not.toContain(value);
 });
 
-test('without JavaScript the extra gift accounts are listed in the page', async ({ browser }) => {
+test('without JavaScript the extra gift accounts stay hidden too', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4322/');
   const gift = page.locator('#gift');
-  await expect(gift.getByText('1310015634357')).toBeVisible();
-  await expect(gift.getByText('082237058889')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeHidden();
+  await expect(gift.getByText('000001628502')).toBeVisible();
+  await expect(gift.getByText('1310015634357')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
   await context.close();
 });

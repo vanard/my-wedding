@@ -99,8 +99,11 @@ export interface InvitationContent {
   };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
-  /** `accounts` are always shown; `more` opens in a pop-up from a button (empty: no button). */
-  gifts: { text: string; accounts: GiftAccount[]; more: GiftAccount[] } | null;
+  /**
+   * `accounts` are always shown; `more` opens in a pop-up from the "Lihat rekening lainnya"
+   * button. `showMore: false` hides that button and leaves `more` out of the page entirely.
+   */
+  gifts: { text: string; accounts: GiftAccount[]; more: GiftAccount[]; showMore: boolean } | null;
   closing: { text: string };
   /** Large photo on the left side on desktop (phones show the background video instead). */
   photos: { desktop: Photo };
@@ -225,6 +228,8 @@ export const invitation: InvitationContent = {
         value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
       },
     ],
+    // Hidden for now at the couple's request (2026-11-14); set true to show the button again.
+    showMore: false,
     more: [
       { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
       { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },
