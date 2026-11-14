@@ -61,6 +61,8 @@ export interface InvitationContent {
   /** Shows the "temporary content" notice. Set false only after replacing every placeholder. */
   isPreview: boolean;
   couple: { first: string; second: string };
+  /** The couple's hashtag, shown as the faint watermark in the hero. Written exactly as it should appear. */
+  hashtag: string;
   greeting: string;
   quote: { text: string; source: string };
   /** Main date used for the countdown and calendar link. */
@@ -101,6 +103,7 @@ export interface InvitationContent {
 export const invitation: InvitationContent = {
   isPreview: true,
   couple: { first: 'Vian', second: 'Ghea' },
+  hashtag: '#GHEArtofVIAN',
   greeting: 'Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.',
   // TEMPORARY: replace with the couple's chosen verse or quote.
   quote: {
@@ -113,19 +116,19 @@ export const invitation: InvitationContent = {
   people: [
     {
       label: 'Mempelai Pria',
-      fullName: 'Vian Rasyid D',
-      parentLine: 'Putra dari',
-      parents: 'Bapak (nama ayah) & Ibu (nama ibu)',
-      instagram: null,
-      photo: { src: groom, alt: 'Vian Rasyid D tersenyum mengenakan jas krem di tepi pantai', position: '45% 50%' },
+      fullName: 'Vian Rasyid Diyatma',
+      parentLine: 'Putra Kedua Dari',
+      parents: 'Bapak (Alm.) Dayat, S.Pd. M.Pd. & Ibu Fatmawati Nurhayaningsih, SKM.',
+      instagram: "@vian_rd",
+      photo: { src: groom, alt: 'Vian Rasyid Diyatma tersenyum mengenakan jas krem di tepi pantai', position: '45% 50%' },
     },
     {
       label: 'Mempelai Wanita',
-      fullName: 'Ghea Citra M',
-      parentLine: 'Putri dari',
-      parents: 'Bapak (nama ayah) & Ibu (nama ibu)',
-      instagram: null,
-      photo: { src: bride, alt: 'Ghea Citra M tersenyum mengenakan gaun pengantin dan hijab putih di tepi pantai', position: '60% 50%' },
+      fullName: 'Ghea Citra Melani',
+      parentLine: 'Putri Ketiga Dari',
+      parents: 'Bapak Mukillah & Ibu Dra. Pahriyah',
+      instagram: '@gheacm',
+      photo: { src: bride, alt: 'Ghea Citra Melani tersenyum mengenakan gaun pengantin putih berenda dan hijab dengan kerudung tipis di pantai', position: '58% 30%' },
     },
   ],
   story: {
@@ -148,7 +151,7 @@ export const invitation: InvitationContent = {
       title: 'Akad Nikah',
       startsAt: '2026-12-20T08:30:00+08:00',
       endsAt: '2026-12-20T09:30:00+08:00',
-      venue: 'Asrama Haji Mataram',
+      venue: 'Asrama Haji Mataram, Bir Ali 2',
       // Street address not supplied yet; add it here when available.
       address: 'Mataram, Nusa Tenggara Barat',
       // Search link; replace with the exact Google Maps share link (pin) when available.
@@ -159,7 +162,7 @@ export const invitation: InvitationContent = {
       title: 'Resepsi',
       startsAt: '2026-12-20T10:30:00+08:00',
       endsAt: '2026-12-20T12:30:00+08:00',
-      venue: 'Asrama Haji Mataram',
+      venue: 'Asrama Haji Mataram, Bir Ali 2',
       // Street address not supplied yet; add it here when available.
       address: 'Mataram, Nusa Tenggara Barat',
       // Search link; replace with the exact Google Maps share link (pin) when available.
