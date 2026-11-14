@@ -131,7 +131,7 @@ curl -s "$SITE/" | grep -o '<meta property="og:image" content="[^"]*"'   # absol
 ```
 
 Then open `$SITE/?to=Nama%20Tamu` on a phone (cover, "Buka Undangan", background
-video, gallery, video clip) and send the link to yourself on WhatsApp to confirm the
+video, gallery, YouTube video clip) and send the link to yourself on WhatsApp to confirm the
 preview image. A local build is not a substitute for these checks.
 
 Caching: `/_astro/*` files have content hashes in their names and are cached for a
@@ -146,9 +146,8 @@ invocations; CLI uploads are limited to 100 MB. Sources:
 https://vercel.com/docs/limits and https://vercel.com/docs/limits/fair-use-guidelines.
 
 Rough transfer estimate per first visit: ≈5.5 MB (background video 4.9 MB, photos,
-fonts and scripts), plus 15.7 MB for each guest who plays the video clip. 3,000
-visits is roughly 17 GB, plus about 16 GB per 1,000 clip plays; repeat visits reuse
-cached `/_astro/` files. These are estimates, not measurements or guarantees.
+fonts and scripts); the video clip streams from YouTube and adds nothing here.
+3,000 visits is roughly 17 GB; repeat visits reuse cached `/_astro/` files. These are estimates, not measurements or guarantees.
 
 Use the launch checklist and budgets in `AGENTS.md` before distributing links.
 Physical phone testing and the 1,000-guest/100-concurrent scenario remain launch checks.

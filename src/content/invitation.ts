@@ -8,7 +8,6 @@ import backdropPoster from '../assets/media/photo-08.jpg';
 import backdropVideo from '../assets/media/background.mp4';
 import storyRings from '../assets/media/album/photo-01.jpg';
 import storyHands from '../assets/media/album/img_4301.jpg';
-import clipVideo from '../assets/media/video-clip.mp4';
 import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
 import linkPreview from '../assets/media/link-preview.jpg';
@@ -69,8 +68,8 @@ export interface InvitationContent {
   events: WeddingEvent[];
   dressCode: { text: string; colors: { name: string; hex: string }[] } | null;
   liveStream: { platform: string; url: string | null } | null;
-  /** `video` is shown above the album photos; it downloads only when a guest presses play. */
-  gallery: { quote: string; video: { src: string; poster: Photo; title: string } | null; photos: Photo[] };
+  /** `video` (a YouTube video ID) is shown above the album photos; the player loads only when a guest presses play. */
+  gallery: { quote: string; video: { youtubeId: string; poster: Photo; title: string } | null; photos: Photo[] };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
   gifts: { text: string; accounts: GiftAccount[] } | null;
@@ -166,7 +165,8 @@ export const invitation: InvitationContent = {
   liveStream: { platform: 'YouTube', url: null },
   gallery: {
     quote: 'Setiap foto menyimpan satu cerita kecil tentang perjalanan kami.',
-    video: { src: clipVideo, poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
+    // https://www.youtube.com/watch?v=gpVMepCXalA
+    video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
   },
   closingQuote: {

@@ -128,18 +128,20 @@ test('access card shows a QR only for a well-formed personal code', async ({ pag
   }
 });
 
-test('video clip in Our Moment downloads only after the guest presses play', async ({ page }) => {
-  const clipRequests: string[] = [];
-  page.on('request', (request) => { if (/video-clip\..*\.mp4/.test(request.url())) clipRequests.push(request.url()); });
-  await page.goto('/#gallery');
+test('video clip loads YouTube only after the guest presses play, without leaking the guest link', async ({ page }) => {
+  const youtube: string[] = [];
+  page.on('request', (request) => { if (/youtube|ytimg|googlevideo/.test(request.url())) youtube.push(request.url()); });
+  // Keep the test offline: answer the embed request locally.
+  await page.route(/youtube-nocookie\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>player</p>' }));
+  await page.goto('/?to=Budi&k=kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA#gallery');
   const play = page.getByRole('link', { name: /^Putar Video klip/ });
-  await expect(play).toBeVisible();
+  await expect(play).toHaveAttribute('href', 'https://www.youtube.com/watch?v=gpVMepCXalA');
   await page.waitForLoadState('networkidle');
-  expect(clipRequests).toEqual([]);
+  expect(youtube).toEqual([]);
   await play.click();
-  const video = page.locator('#gallery video');
-  await expect(video).toHaveAttribute('src', /video-clip\..*\.mp4$/);
-  await expect(video).toBeFocused();
+  const player = page.locator('#gallery iframe');
+  await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/gpVMepCXalA\?autoplay=1/);
+  await expect(player).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
   await expect(play).toHaveCount(0);
 });
 

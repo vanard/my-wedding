@@ -20,9 +20,9 @@ src/assets/media/
 ├── background.mp4                Background video: full teaser (58 s, muted, 720p),
 │                                 behind the invitation column (except the
 │                                 bride/groom portraits), before and after opening
-├── video-clip.mp4                Playable video clip with sound (1:51, 720p),
-│                                 shown above the album
-├── video-clip.jpg                Its poster image before play
+├── video-clip.jpg                Poster for the video clip above the album; the clip
+│                                 itself is on YouTube (gpVMepCXalA) and its player
+│                                 loads only when a guest presses play
 └── link-preview.jpg              1200×630 image for shared links (WhatsApp, …): img_4303
                                   trimmed to 4:5 on a blurred background, made by
                                   `npm run media:preview`
@@ -60,15 +60,9 @@ ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" \
   -an -vf "scale=1280:-2:flags=lanczos,format=yuv420p" -c:v libx264 -profile:v high \
   -preset veryslow -crf 28 -movflags +faststart -map_metadata -1 -map_chapters -1 \
   src/assets/media/background.mp4
-
-# Playable clip: full length, with sound
-ffmpeg -i "media-originals/VIDEO CLIP PREWEDDING GHEA & VIAN .mp4" \
-  -vf "scale=1280:-2:flags=lanczos,format=yuv420p" -c:v libx264 -profile:v high \
-  -preset slow -crf 23 -c:a aac -b:a 128k -ac 2 -movflags +faststart \
-  -map_metadata -1 -map_chapters -1 src/assets/media/video-clip.mp4
 ```
 
-`video-clip.jpg` is a single frame of the clip at 56 s, saved as 1280 px JPEG.
+`video-clip.jpg` is a frame of the clip at 56 s (1280 px JPEG), used as its poster.
 The background video uses `photo-08.jpg` as its placeholder and fades in once
 it starts playing.
 
@@ -78,12 +72,10 @@ it starts playing.
 | --- | --- | --- |
 | All photo masters | 8.9 MB | Never directly; guests get much smaller AVIF/WebP |
 | background.mp4 | 4.9 MB | Automatically, once the page has loaded (before opening) |
-| video-clip.mp4 | 15.7 MB | Only when a guest presses play |
 
 Budget exception (owner's choice: full teaser as background): background.mp4
 alone is about the whole 5 MB full-visit budget in `AGENTS.md`, so a visit
 with the gallery and music will exceed it. It streams progressively (it can
 start before fully downloaded) but must not block the cover or event details.
-The video clip must never preload (`preload="none"`). Every guest who plays it costs about
-16 MB of hosting transfer. If that becomes a problem, host it as an unlisted
-YouTube video and embed it only on click.
+The video clip is streamed by YouTube, so it costs no hosting transfer, and its
+player loads only when a guest presses play.
