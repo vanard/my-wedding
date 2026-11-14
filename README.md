@@ -63,9 +63,10 @@ controls appear after opening.
 
 ## Content and audio
 
-Edit the typed content file. Everything marked TEMPORARY (date, times, venues,
-quote, story, parents, dress-code palette, gift accounts and all photos) is a
-placeholder. Set `isPreview` to false only after replacing it.
+Edit the typed content file. Anything still marked TEMPORARY there is a placeholder
+(currently the opening quote and the dress-code palette; check with
+`grep -n TEMPORARY src/content/invitation.ts`). Set `isPreview` to false only after
+replacing it.
 
 Photos: put originals in `src/assets/` (for example `src/assets/photos/`),
 import them in `invitation.ts` and assign them to `people`, `story`, `gallery`

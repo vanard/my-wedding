@@ -136,12 +136,24 @@ export const invitation: InvitationContent = {
       { src: storyRings, alt: 'Dua tangan memegang sepasang cincin', position: '50% 55%' },
       { src: storyHands, alt: 'Siluet dua tangan saling menggenggam diterpa cahaya senja', position: '50% 35%' },
     ],
-    // TEMPORARY: replace with your own story.
+    // The couple's own story (2026-11-14).
     chapters: [
-      { title: 'Bab satu: Awal bertemu', text: 'Cerita awal pertemuan kalian akan ditulis di sini. Teks ini hanya contoh.' },
-      { title: 'Bab dua: Menjalin hubungan', text: 'Ceritakan bagaimana kalian saling mengenal dan tumbuh bersama.' },
-      { title: 'Bab tiga: Lamaran', text: 'Momen ketika kalian memutuskan untuk melangkah bersama.' },
-      { title: 'Bab empat: Hari pernikahan', text: 'Awal dari perjalanan baru yang akan kalian rayakan bersama keluarga dan sahabat.' },
+      {
+        title: 'Awal Bertemu',
+        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
+      },
+      {
+        title: 'Menjalin Hubungan',
+        text: 'Dari obrolan kecil dan sederhana itu, kami merasa nyaman berbagi cerita setiap harinya. Akhirnya, kami memutuskan untuk menjalin hubungan.',
+      },
+      {
+        title: 'Lamaran',
+        text: '21 Oktober 2026, kami selangkah lebih dekat dengan tujuan hubungan ini. Untuk pertama kalinya, keluarga besar kami bertemu dan berkenalan di momen ini. Atas izin Allah, semuanya berjalan lancar sesuai dengan apa yang kami harapkan.',
+      },
+      {
+        title: 'Hari Pernikahan',
+        text: '20 Desember 2026, adalah hari yang kami pilih untuk melangsungkan pernikahan. Dengan izin Allah, niatan baik ini terlaksana dengan lancar. Sakinah mawaddah warahmah, adalah harapan kami dalam mengarungi kehidupan pernikahan kelak.',
+      },
     ],
   },
   // Use ISO timestamps with an offset.
