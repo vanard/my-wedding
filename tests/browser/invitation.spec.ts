@@ -116,6 +116,13 @@ test('access card shows a QR only for a well-formed personal code', async ({ pag
   await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toBeVisible();
   await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeVisible();
   await card.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  // Keyboard users: the card reopens from the QR button and focus returns there on Escape.
+  const qrButton = page.getByRole('button', { name: 'Kartu akses masuk' });
+  await qrButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(card).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(qrButton).toBeFocused();
   await page.getByRole('button', { name: 'Kartu akses masuk' }).click();
   await expect(card).toBeVisible();
 
