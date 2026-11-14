@@ -52,7 +52,8 @@ export interface WeddingEvent {
 export interface GiftAccount {
   kind: 'bank' | 'wallet' | 'address';
   provider: string;
-  holder: string;
+  /** Account holder or recipient line; null hides it. */
+  holder: string | null;
   /** Account number or address. null hides the copy button. */
   value: string | null;
 }
@@ -86,7 +87,8 @@ export interface InvitationContent {
   };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
-  gifts: { text: string; accounts: GiftAccount[] } | null;
+  /** `accounts` are always shown; `more` opens in a pop-up from a button (empty: no button). */
+  gifts: { text: string; accounts: GiftAccount[]; more: GiftAccount[] } | null;
   closing: { text: string };
   /** Large photo on the left side on desktop (phones show the background video instead). */
   photos: { desktop: Photo };
@@ -212,13 +214,24 @@ export const invitation: InvitationContent = {
     text: 'Di antara banyak hal yang kami syukuri, salah satunya adalah bisa menyebut satu sama lain sebagai rumah.',
     photo: null,
   },
-  // TEMPORARY: never publish real account numbers until the couple provides them.
+  // Provided by the couple (2026-11-14). The copy button copies `value` exactly as written.
   gifts: {
     text: 'Doa restu Anda adalah hadiah terindah bagi kami. Namun jika Anda ingin memberikan tanda kasih, Anda dapat mengirimkannya melalui:',
     accounts: [
-      { kind: 'bank', provider: 'Bank (belum diisi)', holder: 'Nama pemilik rekening', value: null },
-      { kind: 'wallet', provider: 'Dompet digital (belum diisi)', holder: 'Nama pemilik akun', value: null },
-      { kind: 'address', provider: 'Kirim kado', holder: 'Alamat pengiriman', value: null },
+      { kind: 'bank', provider: 'Superbank', holder: 'Ghea Citra Melani', value: '000001628502' },
+      {
+        kind: 'address',
+        provider: 'Kirim kado',
+        holder: 'Penerima: Ghea Citra Melani',
+        value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
+      },
+    ],
+    more: [
+      { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
+      { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },
+      { kind: 'bank', provider: 'Seabank', holder: 'Vian Rasyid', value: '901279716707' },
+      // In the groom's name. Which e-wallet app(s) this number is for was not specified.
+      { kind: 'wallet', provider: 'Dompet digital', holder: 'Vian Rasyid', value: '082237058889' },
     ],
   },
   closing: {

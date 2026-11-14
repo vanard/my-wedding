@@ -1,6 +1,7 @@
+// Copy buttons report in the nearest status line: the pop-up's own, or the section's.
 export function initCopy() {
-  const status = document.querySelector<HTMLElement>('[data-copy-status]');
   document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => button.addEventListener('click', async () => {
+    const status = button.closest('dialog, section')?.querySelector<HTMLElement>('[data-copy-status]');
     const value = button.dataset.copy ?? '';
     const label = button.dataset.copyLabel ?? 'Teks';
     try {

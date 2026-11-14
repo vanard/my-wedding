@@ -4,6 +4,7 @@ import { initMenu } from './menu';
 import { initCountdown } from './countdown';
 import { initGallery } from './gallery';
 import { initCopy } from './copy';
+import { initGiftMore } from './gift-more';
 import { initFullscreen } from './fullscreen';
 import { initBackdrop } from './backdrop';
 import { initAccessCard } from './access-card';
@@ -31,6 +32,7 @@ export function initInvitation() {
   initVideoClip();
   initGuestForms();
   initCopy();
+  initGiftMore();
 
   let opened = false;
   const open = (playMusic: boolean, animate: boolean) => {
