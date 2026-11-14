@@ -22,7 +22,8 @@ src/assets/media/
 │                                 little less zoomed (thin blurred bands top and bottom)
 ├── background-blur.mp4           Tiny 192 px copy of the teaser, blurred by CSS, filling
 │                                 the thin soft bands above and below the video
-├── groom.jpg, bride.jpg          Mempelai Pria / Mempelai Wanita portraits
+├── groom.jpg, bride.jpg          The Groom / The Bride portraits (bride.jpg is a close-up
+│                                 crop, set in CROPS in scripts/optimize-photos.mjs)
 ├── story-2.jpg                   Journey of Love photo (joined hands)
 ├── video-clip.jpg                Poster for the video clip above the album; the clip
 │                                 itself is on YouTube (gpVMepCXalA) and its player loads

@@ -140,7 +140,7 @@ export const invitation: InvitationContent = {
       parentLine: 'Putri Ketiga Dari',
       parents: 'Bapak Mukillah & Ibu Dra. Pahriyah',
       instagram: '@gheacm',
-      photo: { src: bride, alt: 'Ghea Citra Melani tersenyum mengenakan gaun pengantin putih berenda dan hijab dengan kerudung tipis di pantai', position: '58% 30%' },
+      photo: { src: bride, alt: 'Ghea Citra Melani tersenyum mengenakan gaun pengantin putih berenda dan hijab dengan kerudung tipis di pantai', position: '50% 50%' },
     },
   ],
   story: {
