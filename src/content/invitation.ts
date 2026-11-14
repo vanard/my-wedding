@@ -15,6 +15,20 @@ import linkPreview from '../assets/media/link-preview.jpg';
 
 // Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
 const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
+// Camera files (upper-case extensions, HEIC) are not picked up above; stop the build instead of
+// silently leaving them out of the gallery.
+const cameraFiles = Object.keys(import.meta.glob('../assets/media/album/*.{JPG,JPEG,PNG,HEIC,heic,HEIF,heif}'));
+if (cameraFiles.length) {
+  throw new Error(`Camera files in src/assets/media/album/: ${cameraFiles.map((f) => f.split('/').pop()).join(', ')}. `
+    + 'Move them to media-originals/album/ and run `npm run media:photos -- media-originals/album/<file>` (see src/assets/media/README.md).');
+}
+// Unprocessed originals with a lower-case extension get through the check above; the photo
+// script makes masters of at most 2400 px, so anything larger has not been through it.
+const oversized = Object.entries(albumFiles).filter(([, image]) => Math.max(image.width, image.height) > 2400);
+if (oversized.length) {
+  throw new Error(`Unprocessed photos in src/assets/media/album/: ${oversized.map(([f]) => f.split('/').pop()).join(', ')}. `
+    + 'Move them to media-originals/album/ and run `npm run media:photos -- media-originals/album/<file>` (see src/assets/media/README.md).');
+}
 // `file` (name without folder) is what `gallery.moments` refers to.
 const album: (Photo & { file: string })[] = Object.keys(albumFiles).sort().map((file, index) => ({
   src: albumFiles[file]!,
@@ -202,12 +216,11 @@ export const invitation: InvitationContent = {
     video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
     moments: [
-      ['img_4284.jpg', 'img_4285.jpg'], // night, on the rocks
-      ['img_4298.jpg', 'img_4303.jpg', 'img_4304.jpg'], // veil at sunset
-      ['img_4287.jpg', 'img_4294.jpg', 'img_4302.jpg'], // night lights and flares
-      ['img_4289.jpg', 'img_4305.jpg', 'photo-02.jpg', 'photo-03.jpg', 'photo-07.jpg'], // garden picnic
-      ['img_4295.jpg', 'img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
-      ['img_4306.jpg', 'img_4307.jpg'], // forest dance
+      ['img_4286.jpg', 'img_4287b.jpg'], // standing among the trees
+      ['img_4284b.jpg', 'img_4305.jpg', 'photo-09.jpg'], // garden: bench, lying on the grass, veil
+      ['img_4297.jpg', 'img_4298.jpg'], // veil
+      ['img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
+      ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
     ],
   },
   closingQuote: {

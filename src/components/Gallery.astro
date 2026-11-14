@@ -8,6 +8,8 @@ const { gallery, closingQuote, couple } = invitation;
 const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: photo.src, width: Math.min(1400, photo.src.width), format: 'webp' })));
 // Same-moment group per photo, used by the per-visit shuffle in src/scripts/gallery.ts.
 const momentOf = new Map(gallery.moments.flatMap((files, group) => files.map((file) => [file, String(group)] as const)));
+const unknown = [...momentOf.keys()].filter((file) => !gallery.photos.some((photo) => photo.file === file));
+if (unknown.length) throw new Error(`gallery.moments names photos that are not in the album: ${unknown.join(', ')}`);
 ---
 <section id="gallery" class="section gallery" aria-labelledby="gallery-heading">
   <div class="center" data-reveal>

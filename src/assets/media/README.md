@@ -27,9 +27,10 @@ src/assets/media/
 ├── video-clip.jpg                Poster for the video clip above the album; the clip
 │                                 itself is on YouTube (gpVMepCXalA) and its player loads
 │                                 only when a guest presses play
-├── link-preview.jpg              1200×630 image for shared links (WhatsApp, …): album
-│                                 photo img_4303 trimmed to 4:5 on a blurred background,
+├── link-preview.jpg              1200×630 image for shared links (WhatsApp, …):
+│                                 img_4303 trimmed to 4:5 on a blurred background,
 │                                 made by `npm run media:preview`
+├── img_4303.jpg                  Source of link-preview.jpg only (not in the gallery)
 └── album/                        Gallery: every image here is shown, shuffled on each
                                   visit; near-identical shots are listed as "moments" in
                                   src/content/invitation.ts and never shown touching
