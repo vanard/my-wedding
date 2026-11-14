@@ -7,7 +7,6 @@ import coverPhoto from '../assets/media/cover.jpg';
 import backdropPoster from '../assets/media/background.jpg';
 import backdropVideo from '../assets/media/background.mp4';
 import backdropBlurVideo from '../assets/media/background-blur.mp4';
-import storyRings from '../assets/media/story-1.jpg';
 import storyHands from '../assets/media/story-2.jpg';
 import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
@@ -82,7 +81,8 @@ export interface InvitationContent {
   startsAt: string;
   timeZone: string;
   people: Person[];
-  story: { photos: [Photo, Photo]; chapters: { title: string; text: string }[] };
+  /** One photo shows centered; two show side by side. */
+  story: { photos: [Photo] | [Photo, Photo]; chapters: { title: string; text: string }[] };
   events: WeddingEvent[];
   dressCode: { text: string; colors: { name: string; hex: string }[] } | null;
   liveStream: { platform: string; url: string | null } | null;
@@ -145,7 +145,6 @@ export const invitation: InvitationContent = {
   ],
   story: {
     photos: [
-      { src: storyRings, alt: 'Dua tangan memegang sepasang cincin', position: '50% 55%' },
       { src: storyHands, alt: 'Siluet dua tangan saling menggenggam diterpa cahaya senja', position: '50% 35%' },
     ],
     // The couple's own story (2026-11-14).
