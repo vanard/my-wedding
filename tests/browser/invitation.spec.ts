@@ -95,6 +95,41 @@ test('requests music from the opening gesture and reports rejected playback', as
   await expect(page.locator('main')).toBeVisible();
 });
 
+test('music pauses while the guest is away and resumes on return, unless they paused it', async ({ page }) => {
+  // A stand-in player, so this checks the wiring rather than real audio output.
+  await page.addInitScript(() => {
+    const state = new WeakMap<HTMLMediaElement, boolean>();
+    Object.defineProperty(HTMLMediaElement.prototype, 'paused', { get() { return state.get(this) ?? true; } });
+    HTMLMediaElement.prototype.play = function () { state.set(this, false); this.dispatchEvent(new Event('play')); return Promise.resolve(); };
+    HTMLMediaElement.prototype.pause = function () { state.set(this, true); this.dispatchEvent(new Event('pause')); };
+    let hidden = false;
+    Object.defineProperty(document, 'hidden', { get: () => hidden });
+    Object.defineProperty(document, 'visibilityState', { get: () => (hidden ? 'hidden' : 'visible') });
+    (window as unknown as { setHidden: (value: boolean) => void }).setHidden = (value) => {
+      hidden = value;
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+  });
+  const setHidden = (value: boolean) => page.evaluate((v) => (window as unknown as { setHidden: (value: boolean) => void }).setHidden(v), value);
+  const paused = () => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.paused);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  expect(await paused()).toBe(false);
+
+  await setHidden(true);
+  expect(await paused()).toBe(true);
+  await setHidden(false);
+  expect(await paused()).toBe(false);
+
+  // Paused by the guest: it stays paused after they come back.
+  await page.keyboard.press('Escape'); // close the Entry Access Card
+  await page.locator('[data-music-toggle]').click();
+  expect(await paused()).toBe(true);
+  await setHidden(true);
+  await setHidden(false);
+  expect(await paused()).toBe(true);
+});
+
 test('the soundtrack file is served and plays as audio', async ({ page, browserName }) => {
   const response = await page.request.get('/audio/music.mp3');
   expect(response.status()).toBe(200);

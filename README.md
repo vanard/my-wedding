@@ -76,8 +76,9 @@ A gift account with `value: null` shows "Belum tersedia" and no copy button.
 
 Music: `public/audio/music.mp3`, the full audio track of the prewedding video clip
 (≈1.8 MB, see `public/audio/README.md`). It starts from the "Buka Undangan" tap, is not
-preloaded, pauses when the tab is hidden or the video clip plays, and requires a tap to
-resume. `music.src: null` disables the player. The display font (Cormorant Garamond,
+preloaded, and pauses while the guest is on another tab or app, resuming when they come
+back (unless they had paused it). It also pauses when the video clip plays; then a tap on
+the music button resumes it. `music.src: null` disables the player. The display font (Cormorant Garamond,
 SIL OFL) is self-hosted via `@fontsource/cormorant-garamond`; body text uses system fonts.
 
 ## RSVP, wishes and check-in

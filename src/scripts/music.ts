@@ -25,8 +25,21 @@ export function initMusic() {
   audio.addEventListener('pause', update);
   audio.addEventListener('error', () => { status.textContent = 'Musik tidak dapat dimuat. Coba lagi nanti.'; update(); });
   button.addEventListener('click', () => { if (audio.paused) play(); else audio.pause(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) audio.pause(); });
+  // Leaving the page (another tab or app, screen off) pauses the music; coming back resumes it,
+  // but only if it was playing when the guest left (not after they paused it themselves).
+  // The first play came from the opening tap, so browsers allow this resume; if one refuses,
+  // the status asks for a tap.
+  let resumeWhenVisible = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      resumeWhenVisible = !audio.paused;
+      audio.pause();
+    } else if (resumeWhenVisible) {
+      resumeWhenVisible = false;
+      play();
+    }
+  });
   // Another sound source (the video clip) started: pause the music rather than play over it.
-  document.addEventListener('invitation:media-play', () => audio.pause());
+  document.addEventListener('invitation:media-play', () => { resumeWhenVisible = false; audio.pause(); });
   return { open(playMusic: boolean) { player.hidden = false; if (playMusic) play(); } };
 }
