@@ -77,6 +77,8 @@ export interface InvitationContent {
   hashtag: string;
   greeting: string;
   quote: { text: string; source: string };
+  /** Verse shown between the hero and the couple: Arabic text, its translation and the reference. null hides it. */
+  verse: { arabic: string; translation: string; source: string } | null;
   /** Main date used for the countdown and calendar link. */
   startsAt: string;
   timeZone: string;
@@ -125,6 +127,12 @@ export const invitation: InvitationContent = {
     text: 'Beberapa pertemuan memilih caranya sendiri, salah satunya lewat mimpi.',
     source: '',
   },
+  // Provided by the couple (2026-11-14), text exactly as supplied.
+  verse: {
+    arabic: 'وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُمْ مِنْ أَنْفُسِكُمْ أَزْوَاجًا لِتَسْكُنُوا إِلَيْهَا وَجَعَلَ بَيْنَكُمْ مَوَدَّةً وَرَحْمَةً ۚ إِنَّ فِي ذَٰلِكَ لَآيَاتٍ لِقَوْمٍ يَتَفَكَّرُونَ',
+    translation: 'Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sungguh, pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir.',
+    source: 'QS. Ar-Rum Ayat 21',
+  },
   // Sunday 20 December 2026, Mataram (WITA, UTC+8).
   startsAt: '2026-12-20T08:30:00+08:00',
   timeZone: 'Asia/Makassar',
@@ -154,11 +162,11 @@ export const invitation: InvitationContent = {
     chapters: [
       {
         title: 'Awal Bertemu',
-        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
+        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
       },
       {
         title: 'Menjalin Hubungan',
-        text: 'Dari obrolan kecil dan sederhana itu, kami merasa nyaman berbagi cerita setiap harinya. Akhirnya, kami memutuskan untuk menjalin hubungan.',
+        text: 'Dari obrolan kecil dan sederhana itu, muncul rasa nyaman tiap kali berbagi cerita. Tak hanya itu, kami juga menyukai karakter satu sama lain. Perpaduan karakter itu bisa melengkapi bagian yang kurang dari kami. Akhirnya, kami memutuskan untuk menjalin hubungan.',
       },
       {
         title: 'Lamaran',
