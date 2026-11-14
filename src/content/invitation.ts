@@ -204,7 +204,7 @@ export const invitation: InvitationContent = {
     moments: [
       ['img_4286.jpg', 'img_4287b.jpg'], // standing among the trees
       ['img_4284b.jpg', 'img_4305.jpg', 'photo-09.jpg'], // garden: bench, lying on the grass, veil
-      ['img_4297.jpg', 'img_4298.jpg'], // veil
+      ['img_4293b.jpg', 'img_4297.jpg', 'img_4298.jpg'], // veil
       ['img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
       ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
     ],
