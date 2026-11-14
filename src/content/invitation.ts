@@ -7,7 +7,6 @@ import coverPhoto from '../assets/media/cover.jpg';
 import backdropPoster from '../assets/media/background.jpg';
 import backdropVideo from '../assets/media/background.mp4';
 import backdropBlurVideo from '../assets/media/background-blur.mp4';
-import storyRings from '../assets/media/story-1.jpg';
 import storyHands from '../assets/media/story-2.jpg';
 import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
@@ -73,8 +72,6 @@ export interface GiftAccount {
 }
 
 export interface InvitationContent {
-  /** Shows the "temporary content" notice. Set false only after replacing every placeholder. */
-  isPreview: boolean;
   couple: { first: string; second: string };
   /** The couple's hashtag, shown as the faint watermark in the hero. Written exactly as it should appear. */
   hashtag: string;
@@ -84,7 +81,8 @@ export interface InvitationContent {
   startsAt: string;
   timeZone: string;
   people: Person[];
-  story: { photos: [Photo, Photo]; chapters: { title: string; text: string }[] };
+  /** One photo shows centered; two show side by side. */
+  story: { photos: [Photo] | [Photo, Photo]; chapters: { title: string; text: string }[] };
   events: WeddingEvent[];
   dressCode: { text: string; colors: { name: string; hex: string }[] } | null;
   liveStream: { platform: string; url: string | null } | null;
@@ -101,8 +99,11 @@ export interface InvitationContent {
   };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
-  /** `accounts` are always shown; `more` opens in a pop-up from a button (empty: no button). */
-  gifts: { text: string; accounts: GiftAccount[]; more: GiftAccount[] } | null;
+  /**
+   * `accounts` are always shown; `more` opens in a pop-up from the "Lihat rekening lainnya"
+   * button. `showMore: false` hides that button and leaves `more` out of the page entirely.
+   */
+  gifts: { text: string; accounts: GiftAccount[]; more: GiftAccount[]; showMore: boolean } | null;
   closing: { text: string };
   /** Large photo on the left side on desktop (phones show the background video instead). */
   photos: { desktop: Photo };
@@ -117,39 +118,36 @@ export interface InvitationContent {
 }
 
 export const invitation: InvitationContent = {
-  isPreview: true,
   couple: { first: 'Vian', second: 'Ghea' },
   hashtag: '#GHEArtofVIAN',
   greeting: 'Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.',
-  // TEMPORARY: replace with the couple's chosen verse or quote.
   quote: {
-    text: 'Cinta tidak saling menatap, tetapi bersama-sama memandang ke arah yang sama.',
-    source: 'Antoine de Saint-Exupéry',
+    text: 'Beberapa pertemuan memilih caranya sendiri, salah satunya lewat mimpi.',
+    source: '',
   },
   // Sunday 20 December 2026, Mataram (WITA, UTC+8).
   startsAt: '2026-12-20T08:30:00+08:00',
   timeZone: 'Asia/Makassar',
   people: [
     {
-      label: 'Mempelai Pria',
-      fullName: 'Vian Rasyid Diyatma',
+      label: 'The Groom',
+      fullName: 'Vian Rasyid Diyatma, S.Kom.',
       parentLine: 'Putra Kedua Dari',
       parents: 'Bapak (Alm.) Dayat, S.Pd. M.Pd. & Ibu Fatmawati Nurhayaningsih, SKM.',
       instagram: "@vian_rd",
       photo: { src: groom, alt: 'Vian Rasyid Diyatma tersenyum mengenakan jas krem di tepi pantai', position: '45% 50%' },
     },
     {
-      label: 'Mempelai Wanita',
-      fullName: 'Ghea Citra Melani',
+      label: 'The Bride',
+      fullName: 'Ghea Citra Melani, S.Tr.Kes.',
       parentLine: 'Putri Ketiga Dari',
       parents: 'Bapak Mukillah & Ibu Dra. Pahriyah',
       instagram: '@gheacm',
-      photo: { src: bride, alt: 'Ghea Citra Melani tersenyum mengenakan gaun pengantin putih berenda dan hijab dengan kerudung tipis di pantai', position: '58% 30%' },
+      photo: { src: bride, alt: 'Ghea Citra Melani tersenyum mengenakan gaun pengantin putih berenda dan hijab dengan kerudung tipis di pantai', position: '50% 50%' },
     },
   ],
   story: {
     photos: [
-      { src: storyRings, alt: 'Dua tangan memegang sepasang cincin', position: '50% 55%' },
       { src: storyHands, alt: 'Siluet dua tangan saling menggenggam diterpa cahaya senja', position: '50% 35%' },
     ],
     // The couple's own story (2026-11-14).
@@ -197,17 +195,8 @@ export const invitation: InvitationContent = {
       mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Asrama+Haji+Mataram+NTB',
     },
   ],
-  // TEMPORARY palette.
-  dressCode: {
-    text: 'Kami mengundang Anda untuk mengenakan palet warna berikut agar foto bersama terlihat serasi.',
-    colors: [
-      { name: 'Krem', hex: '#efe6d8' },
-      { name: 'Pasir', hex: '#dcc7ad' },
-      { name: 'Merah muda', hex: '#e4b0b5' },
-      { name: 'Karamel', hex: '#c99b6c' },
-      { name: 'Cokelat', hex: '#9a7550' },
-    ],
-  },
+  // No dress-code section (removed by the couple). To show one, set { text, colors: [{ name, hex }] }.
+  dressCode: null,
   // Set url when a streaming link exists; set the whole field to null to hide the section.
   liveStream: { platform: 'YouTube', url: null },
   gallery: {
@@ -218,7 +207,7 @@ export const invitation: InvitationContent = {
     moments: [
       ['img_4286.jpg', 'img_4287b.jpg'], // standing among the trees
       ['img_4284b.jpg', 'img_4305.jpg', 'photo-09.jpg'], // garden: bench, lying on the grass, veil
-      ['img_4297.jpg', 'img_4298.jpg'], // veil
+      ['img_4293b.jpg', 'img_4297.jpg', 'img_4298.jpg'], // veil
       ['img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
       ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
     ],
@@ -239,6 +228,8 @@ export const invitation: InvitationContent = {
         value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
       },
     ],
+    // Hidden for now at the couple's request (2026-11-14); set true to show the button again.
+    showMore: false,
     more: [
       { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
       { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },

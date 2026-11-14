@@ -6,8 +6,9 @@ trimming or other edits. It is set as `music.src` in `src/content/invitation.ts`
 
 - MP3, 128 kbps stereo, 44.1 kHz, metadata removed: about 1.8 MB.
 - Not preloaded (`preload="none"`): it downloads only when a guest opens the invitation
-  (which starts playback) or presses play. It loops, pauses when the tab is hidden, and
-  pauses while the YouTube video clip plays.
+  (which starts playback) or presses play. It loops, pauses while the guest is on another
+  tab or app and resumes when they return (unless they had paused it), and pauses while
+  the YouTube video clip plays.
 
 To regenerate it (or after the video clip changes):
 

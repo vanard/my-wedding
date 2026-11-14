@@ -16,6 +16,12 @@ const SOURCE = 'media-originals';
 const TARGET = 'src/assets/media';
 const LONG_EDGE = 2400;
 const PHOTO = /\.(jpe?g|png|tiff?|webp|heic|heif)$/i;
+// Framing requested by the couple, as fractions of the (upright) original, so regenerating
+// keeps it. bride: a close-up near the groom portrait's scale and eye line, with her head
+// (hijab included) centered horizontally so it stays centered on any phone width (2026-11-14).
+const CROPS = {
+  'bride.jpeg': { left: 0.24, top: 0, width: 0.63, height: 0.63 },
+};
 
 async function* walk(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -41,8 +47,13 @@ for await (const input of inputs()) {
   const output = join(TARGET, dir, `${name.toLowerCase()}.jpg`);
   await mkdir(dirname(output), { recursive: true });
 
-  const info = await sharp(input)
-    .rotate()
+  const crop = CROPS[rel.split('\\').join('/')];
+  const upright = await sharp(input).rotate().toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = upright.info;
+  const info = await sharp(upright.data)
+    .extract(crop
+      ? { left: Math.round(crop.left * w), top: Math.round(crop.top * h), width: Math.round(crop.width * w), height: Math.round(crop.height * h) }
+      : { left: 0, top: 0, width: w, height: h })
     .resize({ width: LONG_EDGE, height: LONG_EDGE, fit: 'inside', withoutEnlargement: true })
     .toColorspace('srgb')
     .jpeg({ quality: 86, mozjpeg: true, chromaSubsampling: '4:4:4' })

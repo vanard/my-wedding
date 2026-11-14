@@ -95,6 +95,41 @@ test('requests music from the opening gesture and reports rejected playback', as
   await expect(page.locator('main')).toBeVisible();
 });
 
+test('music pauses while the guest is away and resumes on return, unless they paused it', async ({ page }) => {
+  // A stand-in player, so this checks the wiring rather than real audio output.
+  await page.addInitScript(() => {
+    const state = new WeakMap<HTMLMediaElement, boolean>();
+    Object.defineProperty(HTMLMediaElement.prototype, 'paused', { get() { return state.get(this) ?? true; } });
+    HTMLMediaElement.prototype.play = function () { state.set(this, false); this.dispatchEvent(new Event('play')); return Promise.resolve(); };
+    HTMLMediaElement.prototype.pause = function () { state.set(this, true); this.dispatchEvent(new Event('pause')); };
+    let hidden = false;
+    Object.defineProperty(document, 'hidden', { get: () => hidden });
+    Object.defineProperty(document, 'visibilityState', { get: () => (hidden ? 'hidden' : 'visible') });
+    (window as unknown as { setHidden: (value: boolean) => void }).setHidden = (value) => {
+      hidden = value;
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+  });
+  const setHidden = (value: boolean) => page.evaluate((v) => (window as unknown as { setHidden: (value: boolean) => void }).setHidden(v), value);
+  const paused = () => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.paused);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  expect(await paused()).toBe(false);
+
+  await setHidden(true);
+  expect(await paused()).toBe(true);
+  await setHidden(false);
+  expect(await paused()).toBe(false);
+
+  // Paused by the guest: it stays paused after they come back.
+  await page.keyboard.press('Escape'); // close the Entry Access Card
+  await page.locator('[data-music-toggle]').click();
+  expect(await paused()).toBe(true);
+  await setHidden(true);
+  await setHidden(false);
+  expect(await paused()).toBe(true);
+});
+
 test('the soundtrack file is served and plays as audio', async ({ page, browserName }) => {
   const response = await page.request.get('/audio/music.mp3');
   expect(response.status()).toBe(200);
@@ -227,42 +262,26 @@ test('album is shuffled so photos from the same moment never touch, and the view
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
-test('more gift accounts open in a pop-up with their own copy status, and close back to the button', async ({ page, context, browserName }) => {
-  if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+test('only the main gift accounts are shown; the extra accounts and their button are hidden', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
   const gift = page.locator('#gift');
   await gift.scrollIntoViewIfNeeded();
   await expect(gift.getByText('Superbank', { exact: true })).toBeVisible();
-  // The extra accounts are not in the page itself, only behind the button.
-  await expect(gift.getByText('Mandiri', { exact: true })).toHaveCount(0);
-
-  const open = page.getByRole('button', { name: 'Lihat rekening lainnya' });
-  await open.click();
-  const sheet = page.getByRole('dialog', { name: 'Rekening & Dompet Digital' });
-  await expect(sheet).toBeVisible();
-  for (const text of ['Mandiri', '1310015634357', 'BCA', '0700237524', 'Seabank', '901279716707', '082237058889']) {
-    await expect(sheet.getByText(text, { exact: true })).toBeVisible();
-  }
-  await sheet.getByRole('button', { name: 'Salin BCA' }).click();
-  // Copied, or the manual fallback where the clipboard is unavailable; shown inside the pop-up either way.
-  await expect(sheet.locator('[data-copy-status]')).toContainText(/BCA berhasil disalin|0700237524/);
-  if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('0700237524');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-
-  await page.keyboard.press('Escape');
-  await expect(sheet).toBeHidden();
-  await expect(open).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
+  // Not just hidden: the extra account numbers are not in the page at all.
+  const html = await page.content();
+  for (const value of ['1310015634357', '0700237524', '901279716707', '082237058889']) expect(html).not.toContain(value);
 });
 
-test('without JavaScript the extra gift accounts are listed in the page', async ({ browser }) => {
+test('without JavaScript the extra gift accounts stay hidden too', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4322/');
   const gift = page.locator('#gift');
-  await expect(gift.getByText('1310015634357')).toBeVisible();
-  await expect(gift.getByText('082237058889')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeHidden();
+  await expect(gift.getByText('000001628502')).toBeVisible();
+  await expect(gift.getByText('1310015634357')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
   await context.close();
 });
