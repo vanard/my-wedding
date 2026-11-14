@@ -17,10 +17,10 @@ const TARGET = 'src/assets/media';
 const LONG_EDGE = 2400;
 const PHOTO = /\.(jpe?g|png|tiff?|webp|heic|heif)$/i;
 // Framing requested by the couple, as fractions of the (upright) original, so regenerating
-// keeps it. bride: a close-up near the groom portrait's scale and eye line, with her head
-// (hijab included) centered horizontally so it stays centered on any phone width (2026-11-14).
+// keeps it. bride: framed from the top of the photo down, with her head (hijab included)
+// centered horizontally so it stays centered on any phone width (2026-11-14).
 const CROPS = {
-  'bride.jpeg': { left: 0.24, top: 0, width: 0.63, height: 0.63 },
+  'bride.jpeg': { left: 0.195, top: 0, width: 0.72, height: 0.72 },
 };
 
 async function* walk(dir) {

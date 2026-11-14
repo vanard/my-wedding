@@ -1,0 +1,27 @@
+---
+// Verse between the hero and the couple (QS. Ar-Rum 21): Arabic text, translation, reference.
+// The Arabic uses the phone's own Arabic font (no extra download); lang/dir let it shape and
+// read right to left.
+import { invitation } from '../content/invitation';
+const { verse } = invitation;
+---
+{verse && (
+  <section id="verse" class="section verse" aria-labelledby="verse-heading">
+    <figure class="card glass" data-reveal>
+      <h2 id="verse-heading" class="sr-only">{verse.source}</h2>
+      <blockquote>
+        <p class="arabic" lang="ar" dir="rtl">{verse.arabic}</p>
+        <p class="translation">“{verse.translation}”</p>
+      </blockquote>
+      <figcaption class="eyebrow">{verse.source}</figcaption>
+    </figure>
+  </section>
+)}
+<style>
+  .verse { padding-block: 4rem; }
+  .card { max-width: 26rem; margin: 0 auto; padding: 2.25rem 1.4rem 2rem; border-radius: 14px; text-align: center; }
+  blockquote { margin: 0; }
+  .arabic { margin: 0 0 1.5rem; font-family: 'Noto Naskh Arabic', 'Geeza Pro', 'Traditional Arabic', 'Arabic Typesetting', 'Amiri', serif; font-size: 1.45rem; line-height: 2.1; }
+  .translation { margin: 0 0 1.4rem; font-size: .82rem; line-height: 1.7; color: var(--muted); }
+  figcaption { margin: 0; }
+</style>

@@ -23,7 +23,7 @@ const { backdrop } = invitation;
   /* The teaser almost fills the column: --video-height of it (never narrower than the column),
      so it is a little less zoomed. The thin bands left at the top and bottom show the blurred
      copy, and the video's edges fade into it so the join is not noticeable. */
-  .backdrop { --video-height: 90%; }
+  .backdrop { --video-height: 85%; }
   .whole { inset: 50% auto auto 50%; width: auto; height: max(var(--video-height), calc(var(--col) * 9 / 16)); aspect-ratio: 16 / 9;
     transform: translate(-50%, -50%); object-fit: cover;
     -webkit-mask-image: linear-gradient(transparent, #000 7%, #000 93%, transparent); mask-image: linear-gradient(transparent, #000 7%, #000 93%, transparent); }
