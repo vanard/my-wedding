@@ -167,6 +167,7 @@ export function initAccessCard(): (onClose?: () => void) => void {
   const code = guestCode();
   let qr: QrCodeGenerateResult | null = null;
   let afterClose: (() => void) | undefined;
+  let opener: HTMLElement | null = null;
 
   const prepare = async () => {
     if (!code || qr || !box) return;
@@ -198,10 +199,15 @@ export function initAccessCard(): (onClose?: () => void) => void {
   dialog.querySelector('[data-access-close]')?.addEventListener('click', () => dialog.close());
   // Tapping the dimmed area outside the card closes it.
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => { afterClose?.(); afterClose = undefined; });
+  // Return focus explicitly (WebKit does not always restore it to the button that opened the card).
+  dialog.addEventListener('close', () => {
+    if (afterClose) afterClose(); else opener?.focus();
+    afterClose = undefined;
+  });
 
   return (onClose) => {
     afterClose = onClose;
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     void prepare();
     if (!dialog.open) dialog.showModal();
   };

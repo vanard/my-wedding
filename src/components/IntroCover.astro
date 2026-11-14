@@ -1,34 +1,16 @@
 ---
-import { getImage } from 'astro:assets';
 import { invitation } from '../content/invitation';
 import { coverDate } from '../lib/format';
-const { couple, photos, isPreview } = invitation;
+const { couple, isPreview } = invitation;
 const date = coverDate(invitation.startsAt, invitation.timeZone);
 
-// Phones: the cover photo fills the screen. Desktop (960 px+): the cover photo is on the
-// left (DesktopAside), so this column shows the shared backdrop (photo-08, then the video).
-// The desktop <source> is a 1 px blank, so desktop browsers never download this image.
-// A landscape photo filling a portrait screen is drawn about 1.5× the screen height wide.
-const widths = [768, 1080, 1600, 2048].filter((width) => width <= photos.cover.src.width);
-const sizes = '(orientation: portrait) 150vh, 100vw';
-const [avif, webp, jpeg] = await Promise.all(
-  (['avif', 'webp', 'jpg'] as const).map((format) => getImage({ src: photos.cover.src, widths, format })),
-);
-const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+// No photo of its own: the shared backdrop (background.jpg, then the teaser video) shows
+// through on phones and in the desktop column. cover.jpg belongs to the desktop left side.
 ---
 <header class="cover screen" id="cover">
-  <div class="bg">
-    <picture>
-      <source media="(min-width: 960px)" srcset={blank} />
-      <source type="image/avif" srcset={avif!.srcSet.attribute} sizes={sizes} />
-      <source type="image/webp" srcset={webp!.srcSet.attribute} sizes={sizes} />
-      <img class="fill" src={jpeg!.src} srcset={jpeg!.srcSet.attribute} sizes={sizes} alt={photos.cover.alt} width={photos.cover.src.width} height={photos.cover.src.height}
-        fetchpriority="high" decoding="async" style={photos.cover.position ? `object-position: ${photos.cover.position}` : undefined} />
-    </picture>
-  </div>
   <div class="top">
     <p class="eyebrow">The wedding of</p>
-    <h1>{couple.first} &amp;<br />{couple.second}</h1>
+    <h1>{couple.first} &amp; {couple.second}</h1>
   </div>
   <div class="bottom">
     <p class="eyebrow">Kepada Yth.</p>
@@ -39,21 +21,18 @@ const blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAA
   </div>
 </header>
 <style>
-  .cover { --overlay: linear-gradient(180deg, rgb(18 18 17 / 0.55), rgb(18 18 17 / 0.15) 40%, rgb(18 18 17 / 0.25) 60%, rgb(18 18 17 / 0.8)); position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; padding: calc(2.5rem + env(safe-area-inset-top)) var(--gutter) calc(2.5rem + env(safe-area-inset-bottom)); text-align: center; overflow: hidden; }
+  .cover { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; padding: calc(2.5rem + env(safe-area-inset-top)) var(--gutter) calc(2.5rem + env(safe-area-inset-bottom)); text-align: center; overflow: hidden; }
   /* While leaving, the cover floats over the revealed invitation and slides away. */
   .cover.is-leaving { position: fixed; z-index: 40; top: 0; right: 0; width: var(--col); height: 100vh; height: 100dvh; transition: transform .9s cubic-bezier(.7, 0, .2, 1), opacity .9s ease; transform: translateY(-100%); opacity: .4; }
   .preview { position: absolute; top: calc(.5rem + env(safe-area-inset-top)); left: 0; right: 0; margin: 0; font-size: .62rem; letter-spacing: .08em; color: var(--muted); }
   .date { display: flex; justify-content: space-between; max-width: 15rem; margin: 0 auto 2.5rem; }
-  h1 { font-size: 3.6rem; font-size: clamp(3rem, 17cqi, 4.4rem); margin: .8rem 0 0; }
+  /* Names on one line, sized to the column (cqi) so they fit from 320 px phones up. */
+  h1 { font-size: 3rem; font-size: clamp(2.3rem, 12.5cqi, 4.6rem); white-space: nowrap; margin: .8rem 0 0; }
   .bottom { max-width: 20rem; margin-inline: auto; }
   .bottom .eyebrow { margin-bottom: .2rem; }
   .honorific { margin-bottom: .1rem; }
   .guest { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.2; margin-bottom: .6rem; overflow-wrap: anywhere; }
   .small { margin-bottom: 1.5rem; }
-  /* Desktop: the shared backdrop (already shaded) shows through instead of the cover photo. */
-  @media (min-width: 960px) {
-    .cover > .bg { display: none; }
-    /* Desktop: draw the top and bottom groups toward the middle of the column. */
-    .cover { padding-block: clamp(3.5rem, 13vh, 9rem); }
-  }
+  /* Desktop: draw the top and bottom groups toward the middle of the column. */
+  @media (min-width: 960px) { .cover { padding-block: clamp(3.5rem, 13vh, 9rem); } }
 </style>

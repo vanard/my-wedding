@@ -43,13 +43,14 @@ test('every visit starts at the cover, including a reload after opening', async 
 test('background video starts loading before opening, but not with reduced motion', async ({ page, browser }) => {
   await page.goto('/?to=Budi');
   // Playback itself depends on the browser's H.264 support; the request is what we control.
-  await expect(page.locator('[data-backdrop-video]')).toHaveAttribute('src', /background\..*\.mp4$/);
+  await expect(page.locator('video.whole[data-backdrop-video]')).toHaveAttribute('src', /\/background\.[^/]*\.mp4$/);
+  await expect(page.locator('video.fill-blur[data-backdrop-video]')).toHaveAttribute('src', /\/background-blur\.[^/]*\.mp4$/);
   await expect(page.locator('#cover')).toBeVisible();
 
   const reduced = await browser.newPage({ reducedMotion: 'reduce' });
   await reduced.goto('/?to=Budi');
   await reduced.waitForLoadState('load');
-  await expect(reduced.locator('[data-backdrop-video]')).not.toHaveAttribute('src', /.+/);
+  for (const video of await reduced.locator('[data-backdrop-video]').all()) await expect(video).not.toHaveAttribute('src', /.+/);
   await reduced.close();
 });
 
@@ -115,6 +116,13 @@ test('access card shows a QR only for a well-formed personal code', async ({ pag
   await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toBeVisible();
   await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeVisible();
   await card.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  // Keyboard users: the card reopens from the QR button and focus returns there on Escape.
+  const qrButton = page.getByRole('button', { name: 'Kartu akses masuk' });
+  await qrButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(card).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(qrButton).toBeFocused();
   await page.getByRole('button', { name: 'Kartu akses masuk' }).click();
   await expect(card).toBeVisible();
 
@@ -155,4 +163,30 @@ test('floating buttons step aside while the video clip is on screen', async ({ p
   await expect(side).toBeHidden();
   await page.locator('#rsvp').scrollIntoViewIfNeeded();
   await expect(side).toBeVisible();
+});
+
+test('album is shuffled so photos from the same moment never touch, and the viewer follows the order', async ({ page }) => {
+  await page.goto('/?to=Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  await page.locator('#gallery').scrollIntoViewIfNeeded();
+  const touching = await page.evaluate(() => {
+    const tiles = [...document.querySelectorAll<HTMLElement>('[data-gallery] li')].map((li) => ({ moment: li.dataset.moment, box: li.getBoundingClientRect() }));
+    let count = 0;
+    for (let i = 0; i < tiles.length; i++) for (let j = i + 1; j < tiles.length; j++) {
+      const a = tiles[i]!, b = tiles[j]!;
+      if (a.moment === undefined || a.moment !== b.moment) continue;
+      const sameColumn = Math.abs(a.box.left - b.box.left) < 5;
+      const gap = Math.max(a.box.top, b.box.top) - Math.min(a.box.bottom, b.box.bottom);
+      const overlap = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+      if (sameColumn ? gap < 20 : overlap > 0.2 * Math.min(a.box.height, b.box.height)) count++;
+    }
+    return count;
+  });
+  expect(touching).toBe(0);
+  const third = page.locator('[data-gallery-item]').nth(2);
+  const href = await third.getAttribute('href');
+  await third.click();
+  await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^3 \/ \d+$/);
+  expect(await page.locator('[data-lightbox-image]').getAttribute('src')).toContain(href!);
 });

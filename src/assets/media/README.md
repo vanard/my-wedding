@@ -7,29 +7,37 @@ deployed). Don't put camera files here directly; put them in
 
 ## Current files
 
+A photo with a job on the site is named for that job and kept out of `album/`, so it
+is not repeated in the gallery. Everything in `album/` is gallery-only.
+
 ```
 src/assets/media/
+├── cover.jpg                     Large photo on the left side, desktop only
+├── background.jpg                Behind the cover and the invitation (phones: full
+│                                 screen; desktop: right column) until the background video
+│                                 plays, and instead of it for reduced motion, Data Saver
+│                                 or no JavaScript
+├── background.mp4                Background video: full teaser (58 s, muted, 720p), before
+│                                 and after opening; 90% of the full height so it is a
+│                                 little less zoomed (thin blurred bands top and bottom)
+├── background-blur.mp4           Tiny 192 px copy of the teaser, blurred by CSS, filling
+│                                 the thin soft bands above and below the video
 ├── groom.jpg, bride.jpg          Mempelai Pria / Mempelai Wanita portraits
-├── photo-05.jpg                  Opening cover (all devices) + large left photo on desktop
-├── photo-08.jpg                  Shown behind the scrolling sections until the
-│                                 background video plays (and instead of it for
-│                                 reduced motion, Data Saver, or no JavaScript)
-├── album/                        Gallery (27 photos): img_XXXX.jpg in shot order,
-│                                 then photo-01…04 and photo-07. Every image in
-│                                 this folder is shown automatically, sorted by name
-├── background.mp4                Background video: full teaser (58 s, muted, 720p),
-│                                 behind the invitation column (except the
-│                                 bride/groom portraits), before and after opening
+├── story-1.jpg, story-2.jpg      Journey of Love photos (rings; joined hands)
 ├── video-clip.jpg                Poster for the video clip above the album; the clip
-│                                 itself is on YouTube (gpVMepCXalA) and its player
-│                                 loads only when a guest presses play
-└── link-preview.jpg              1200×630 image for shared links (WhatsApp, …): img_4303
-                                  trimmed to 4:5 on a blurred background, made by
-                                  `npm run media:preview`
+│                                 itself is on YouTube (gpVMepCXalA) and its player loads
+│                                 only when a guest presses play
+├── link-preview.jpg              1200×630 image for shared links (WhatsApp, …): album
+│                                 photo img_4303 trimmed to 4:5 on a blurred background,
+│                                 made by `npm run media:preview`
+└── album/                        Gallery: every image here is shown, shuffled on each
+                                  visit; near-identical shots are listed as "moments" in
+                                  src/content/invitation.ts and never shown touching
 ```
 
-`media-originals/RENAMES.txt` maps `photo-NN` back to the original file names.
-The single photos were numbered in the order they were saved.
+`media-originals/` mirrors these names; `media-originals/RENAMES.txt` maps them back to
+the original camera/phone file names. To add one new photo, put the original in
+`media-originals/album/` and run `npm run media:photos -- media-originals/album/<file>`.
 
 Only files imported in `src/content/invitation.ts` are published.
 
@@ -60,10 +68,16 @@ ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" \
   -an -vf "scale=1280:-2:flags=lanczos,format=yuv420p" -c:v libx264 -profile:v high \
   -preset veryslow -crf 28 -movflags +faststart -map_metadata -1 -map_chapters -1 \
   src/assets/media/background.mp4
+
+# Blurred fill behind it: a tiny copy (the page blurs it), ~200 KB
+ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" \
+  -an -vf "scale=192:-2:flags=area,format=yuv420p" -c:v libx264 -profile:v main \
+  -preset veryslow -crf 30 -movflags +faststart -map_metadata -1 -map_chapters -1 \
+  src/assets/media/background-blur.mp4
 ```
 
 `video-clip.jpg` is a frame of the clip at 56 s (1280 px JPEG), used as its poster.
-The background video uses `photo-08.jpg` as its placeholder and fades in once
+The background video uses `background.jpg` as its placeholder and fades in once
 it starts playing.
 
 ## Size budget
@@ -72,6 +86,7 @@ it starts playing.
 | --- | --- | --- |
 | All photo masters | 8.9 MB | Never directly; guests get much smaller AVIF/WebP |
 | background.mp4 | 4.9 MB | Automatically, once the page has loaded (before opening) |
+| background-blur.mp4 | 0.2 MB | With background.mp4 |
 
 Budget exception (owner's choice: full teaser as background): background.mp4
 alone is about the whole 5 MB full-visit budget in `AGENTS.md`, so a visit

@@ -3,20 +3,23 @@ import type { ImageMetadata } from 'astro';
 // The couple's own photos (web versions generated from media-originals/; see src/assets/media/README.md).
 import groom from '../assets/media/groom.jpg';
 import bride from '../assets/media/bride.jpg';
-import coverPhoto from '../assets/media/photo-05.jpg';
-import backdropPoster from '../assets/media/photo-08.jpg';
+import coverPhoto from '../assets/media/cover.jpg';
+import backdropPoster from '../assets/media/background.jpg';
 import backdropVideo from '../assets/media/background.mp4';
-import storyRings from '../assets/media/album/photo-01.jpg';
-import storyHands from '../assets/media/album/img_4301.jpg';
+import backdropBlurVideo from '../assets/media/background-blur.mp4';
+import storyRings from '../assets/media/story-1.jpg';
+import storyHands from '../assets/media/story-2.jpg';
 import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
 import linkPreview from '../assets/media/link-preview.jpg';
 
 // Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
 const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
-const album: Photo[] = Object.keys(albumFiles).sort().map((file, index) => ({
+// `file` (name without folder) is what `gallery.moments` refers to.
+const album: (Photo & { file: string })[] = Object.keys(albumFiles).sort().map((file, index) => ({
   src: albumFiles[file]!,
   alt: `Foto prewedding Vian dan Ghea ${index + 1}`,
+  file: file.split('/').pop()!,
 }));
 
 export interface Photo {
@@ -69,14 +72,27 @@ export interface InvitationContent {
   dressCode: { text: string; colors: { name: string; hex: string }[] } | null;
   liveStream: { platform: string; url: string | null } | null;
   /** `video` (a YouTube video ID) is shown above the album photos; the player loads only when a guest presses play. */
-  gallery: { quote: string; video: { youtubeId: string; poster: Photo; title: string } | null; photos: Photo[] };
+  gallery: {
+    quote: string;
+    video: { youtubeId: string; poster: Photo; title: string } | null;
+    photos: (Photo & { file?: string })[];
+    /**
+     * Album photos from the same moment (near-identical shots), by file name. The gallery is
+     * shuffled on every visit, and photos in the same group are never placed next to each other.
+     */
+    moments: string[][];
+  };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
   gifts: { text: string; accounts: GiftAccount[] } | null;
   closing: { text: string };
-  photos: { cover: Photo; desktop: Photo };
-  /** Shared background behind the scrolling sections: muted video URL, and the photo shown until it plays. */
-  backdrop: { video: string; poster: Photo };
+  /** Large photo on the left side on desktop (phones show the background video instead). */
+  photos: { desktop: Photo };
+  /**
+   * Shared background behind the invitation column: the muted teaser shown whole (uncropped),
+   * a tiny copy of it blurred to fill the rest of the column, and the photo shown until they play.
+   */
+  backdrop: { video: string; blurVideo: string; poster: Photo };
   /** Image shown when the invitation link is shared (WhatsApp, Instagram, …); 1200×630. */
   linkPreview: Photo;
   music: { src: string | null; title: string };
@@ -168,6 +184,14 @@ export const invitation: InvitationContent = {
     // https://www.youtube.com/watch?v=gpVMepCXalA
     video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
+    moments: [
+      ['img_4284.jpg', 'img_4285.jpg'], // night, on the rocks
+      ['img_4298.jpg', 'img_4303.jpg', 'img_4304.jpg'], // veil at sunset
+      ['img_4287.jpg', 'img_4294.jpg', 'img_4302.jpg'], // night lights and flares
+      ['img_4289.jpg', 'img_4305.jpg', 'photo-02.jpg', 'photo-03.jpg', 'photo-07.jpg'], // garden picnic
+      ['img_4295.jpg', 'img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
+      ['img_4306.jpg', 'img_4307.jpg'], // forest dance
+    ],
   },
   closingQuote: {
     text: 'Di antara banyak hal yang kami syukuri, salah satunya adalah bisa menyebut satu sama lain sebagai rumah.',
@@ -186,11 +210,9 @@ export const invitation: InvitationContent = {
     text: 'Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Anda berkenan hadir dan memberikan doa restu.',
   },
   photos: {
-    // photo-05: on portrait screens the crop centres on the couple.
-    cover: { src: coverPhoto, alt: '', position: '53% 50%' },
     desktop: { src: coverPhoto, alt: '' },
   },
-  backdrop: { video: backdropVideo, poster: { src: backdropPoster, alt: '' } },
+  backdrop: { video: backdropVideo, blurVideo: backdropBlurVideo, poster: { src: backdropPoster, alt: '' } },
   linkPreview: { src: linkPreview, alt: 'Vian dan Ghea di bawah kerudung saat matahari terbenam' },
   // Put your licensed audio in public/audio/ and set src to '/audio/your-song.mp3'.
   music: { src: null, title: 'Musik undangan' },
