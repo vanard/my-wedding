@@ -2,15 +2,9 @@
 // personal code from `?k=`. The code is only a lookup key: the check-in endpoint verifies
 // its hash on the server, and staff must be signed in. `?to=` stays a display greeting.
 import type { QrCodeGenerateResult } from 'uqr';
-
-const CODE = /^[A-Za-z0-9_-]{32,64}$/;
+import { guestCode } from './guest-code';
 const BODY_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const DISPLAY_FONT = '"Cormorant Garamond", Garamond, Georgia, serif';
-
-export function guestCode(): string | null {
-  const code = new URLSearchParams(window.location.search).get('k');
-  return code && CODE.test(code) ? code : null;
-}
 
 /** The check-in link. The code goes in the fragment, so it is never sent in a request line. */
 export function checkInUrl(code: string): string {

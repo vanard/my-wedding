@@ -8,6 +8,7 @@ import { initFullscreen } from './fullscreen';
 import { initBackdrop } from './backdrop';
 import { initAccessCard } from './access-card';
 import { initVideoClip } from './video-clip';
+import { initGuestForms } from './guest-forms';
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -28,6 +29,7 @@ export function initInvitation() {
   initCountdown();
   initGallery();
   initVideoClip();
+  initGuestForms();
   initCopy();
 
   let opened = false;
