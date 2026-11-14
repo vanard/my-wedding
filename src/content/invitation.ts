@@ -14,9 +14,11 @@ import linkPreview from '../assets/media/link-preview.jpg';
 
 // Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
 const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
-const album: Photo[] = Object.keys(albumFiles).sort().map((file, index) => ({
+// `file` (name without folder) is what `gallery.moments` refers to.
+const album: (Photo & { file: string })[] = Object.keys(albumFiles).sort().map((file, index) => ({
   src: albumFiles[file]!,
   alt: `Foto prewedding Vian dan Ghea ${index + 1}`,
+  file: file.split('/').pop()!,
 }));
 
 export interface Photo {
@@ -69,7 +71,16 @@ export interface InvitationContent {
   dressCode: { text: string; colors: { name: string; hex: string }[] } | null;
   liveStream: { platform: string; url: string | null } | null;
   /** `video` (a YouTube video ID) is shown above the album photos; the player loads only when a guest presses play. */
-  gallery: { quote: string; video: { youtubeId: string; poster: Photo; title: string } | null; photos: Photo[] };
+  gallery: {
+    quote: string;
+    video: { youtubeId: string; poster: Photo; title: string } | null;
+    photos: (Photo & { file?: string })[];
+    /**
+     * Album photos from the same moment (near-identical shots), by file name. The gallery is
+     * shuffled on every visit, and photos in the same group are never placed next to each other.
+     */
+    moments: string[][];
+  };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
   gifts: { text: string; accounts: GiftAccount[] } | null;
@@ -168,6 +179,14 @@ export const invitation: InvitationContent = {
     // https://www.youtube.com/watch?v=gpVMepCXalA
     video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
+    moments: [
+      ['img_4284.jpg', 'img_4285.jpg'], // night, on the rocks
+      ['img_4298.jpg', 'img_4303.jpg', 'img_4304.jpg'], // veil at sunset
+      ['img_4287.jpg', 'img_4294.jpg', 'img_4302.jpg'], // night lights and flares
+      ['img_4289.jpg', 'img_4305.jpg', 'photo-02.jpg', 'photo-03.jpg', 'photo-07.jpg'], // garden picnic
+      ['img_4295.jpg', 'img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
+      ['img_4306.jpg', 'img_4307.jpg'], // forest dance
+    ],
   },
   closingQuote: {
     text: 'Di antara banyak hal yang kami syukuri, salah satunya adalah bisa menyebut satu sama lain sebagai rumah.',

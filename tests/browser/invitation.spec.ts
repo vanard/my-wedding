@@ -156,3 +156,29 @@ test('floating buttons step aside while the video clip is on screen', async ({ p
   await page.locator('#rsvp').scrollIntoViewIfNeeded();
   await expect(side).toBeVisible();
 });
+
+test('album is shuffled so photos from the same moment never touch, and the viewer follows the order', async ({ page }) => {
+  await page.goto('/?to=Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  await page.locator('#gallery').scrollIntoViewIfNeeded();
+  const touching = await page.evaluate(() => {
+    const tiles = [...document.querySelectorAll<HTMLElement>('[data-gallery] li')].map((li) => ({ moment: li.dataset.moment, box: li.getBoundingClientRect() }));
+    let count = 0;
+    for (let i = 0; i < tiles.length; i++) for (let j = i + 1; j < tiles.length; j++) {
+      const a = tiles[i]!, b = tiles[j]!;
+      if (a.moment === undefined || a.moment !== b.moment) continue;
+      const sameColumn = Math.abs(a.box.left - b.box.left) < 5;
+      const gap = Math.max(a.box.top, b.box.top) - Math.min(a.box.bottom, b.box.bottom);
+      const overlap = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+      if (sameColumn ? gap < 20 : overlap > 0.2 * Math.min(a.box.height, b.box.height)) count++;
+    }
+    return count;
+  });
+  expect(touching).toBe(0);
+  const third = page.locator('[data-gallery-item]').nth(2);
+  const href = await third.getAttribute('href');
+  await third.click();
+  await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^3 \/ \d+$/);
+  expect(await page.locator('[data-lightbox-image]').getAttribute('src')).toContain(href!);
+});

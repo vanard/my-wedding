@@ -6,6 +6,8 @@ import { invitation } from '../content/invitation';
 const { gallery, closingQuote, couple } = invitation;
 // Full-size views are generated only when a guest opens them (or follows the link without JS).
 const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: photo.src, width: Math.min(1400, photo.src.width), format: 'webp' })));
+// Same-moment group per photo, used by the per-visit shuffle in src/scripts/gallery.ts.
+const momentOf = new Map(gallery.moments.flatMap((files, group) => files.map((file) => [file, String(group)] as const)));
 ---
 <section id="gallery" class="section gallery" aria-labelledby="gallery-heading">
   <div class="center" data-reveal>
@@ -25,7 +27,7 @@ const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: pho
   )}
   <ul class="grid" data-gallery>
     {gallery.photos.map((photo, index) => (
-      <li>
+      <li data-moment={(photo.file && momentOf.get(photo.file)) || undefined}>
         <a href={full[index]?.src} data-gallery-item data-alt={photo.alt}>
           <Photo photo={photo} widths={[320, 480, 640]} sizes="(min-width: 960px) 230px, 50vw" class="tile" />
           <span class="sr-only">Perbesar foto {index + 1}</span>
