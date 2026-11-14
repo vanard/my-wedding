@@ -1,18 +1,13 @@
-@import '@fontsource/italiana/400.css';
+/* Display font: Cormorant Garamond (SIL OFL), self-hosted, one weight (500; 400 is too thin
+   over photos). Each subset file downloads only when its characters are used, so in
+   practice just the Latin file. */
+@import '@fontsource/cormorant-garamond/500.css';
 @import './tokens.css';
-
-/* A simpler "&" for display text: only U+0026 comes from Marcellus (SIL OFL); every other
-   character stays Italiana. Browsers download this file only when an "&" is rendered. */
-@font-face {
-  font-family: 'Display Ampersand';
-  src: url('@fontsource/marcellus/files/marcellus-latin-400-normal.woff2') format('woff2');
-  unicode-range: U+0026;
-  font-display: swap;
-}
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: .9rem; line-height: 1.65; }
+/* Full-height digits: Cormorant defaults to old-style numerals, which dip in times and dates. */
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: .9rem; line-height: 1.65; font-variant-numeric: lining-nums; }
 [hidden] { display: none !important; }
 img { display: block; max-width: 100%; }
 a { color: inherit; text-underline-offset: .25em; }
@@ -21,7 +16,7 @@ button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 h1, h2, h3, p { margin-top: 0; }
-h1, h2 { font-family: var(--font-display); font-weight: 400; line-height: 1.05; overflow-wrap: anywhere; }
+h1, h2 { font-family: var(--font-display); font-weight: 500; line-height: 1.05; overflow-wrap: anywhere; }
 h2 { font-size: 2.3rem; font-size: clamp(2rem, 11cqi, 2.8rem); text-transform: uppercase; letter-spacing: .01em; margin-bottom: 1rem; }
 h3 { font-size: .9rem; font-weight: 700; line-height: 1.4; margin-bottom: .3rem; }
 

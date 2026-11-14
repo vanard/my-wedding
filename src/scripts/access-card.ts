@@ -5,7 +5,7 @@ import type { QrCodeGenerateResult } from 'uqr';
 
 const CODE = /^[A-Za-z0-9_-]{32,64}$/;
 const BODY_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const DISPLAY_FONT = '"Display Ampersand", Italiana, Georgia, serif';
+const DISPLAY_FONT = '"Cormorant Garamond", Garamond, Georgia, serif';
 
 export function guestCode(): string | null {
   const code = new URLSearchParams(window.location.search).get('k');
@@ -55,7 +55,7 @@ function spaced(ctx: CanvasRenderingContext2D, text: string, cx: number, y: numb
 
 function fitFont(ctx: CanvasRenderingContext2D, text: string, family: string, size: number, maxWidth: number): void {
   let px = size;
-  do { ctx.font = `${px}px ${family}`; px -= 4; } while (px > 28 && ctx.measureText(text).width > maxWidth);
+  do { ctx.font = `500 ${px}px ${family}`; px -= 4; } while (px > 28 && ctx.measureText(text).width > maxWidth);
 }
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, maxWidth: number, lineHeight: number) {
@@ -81,7 +81,7 @@ async function renderCard(dialog: HTMLElement, qr: QrCodeGenerateResult, guest: 
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas unavailable');
-  await Promise.all([document.fonts.load(`96px ${DISPLAY_FONT}`, 'Vian & Ghea'), document.fonts.ready]);
+  await Promise.all([document.fonts.load(`500 96px ${DISPLAY_FONT}`, 'Vian & Ghea 0123456789'), document.fonts.ready]);
 
   ctx.fillStyle = '#1f1f1e';
   ctx.fillRect(0, 0, W, H);

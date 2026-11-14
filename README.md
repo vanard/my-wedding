@@ -68,8 +68,8 @@ A gift account with `value: null` shows "Belum tersedia" and no copy button.
 
 Place a licensed MP3 in `public/audio/` and set `music.src`. No audio file is
 supplied; the player stays disabled until configured. Music pauses when the tab
-is hidden and requires a tap to resume. The display font (Italiana, SIL OFL) is
-self-hosted via `@fontsource/italiana`; body text uses system fonts.
+is hidden and requires a tap to resume. The display font (Cormorant Garamond,
+SIL OFL) is self-hosted via `@fontsource/cormorant-garamond`; body text uses system fonts.
 
 ## RSVP and wishes: prepared, not connected
 

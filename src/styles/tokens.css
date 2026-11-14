@@ -8,7 +8,7 @@
   --glass-strong: rgb(40 40 38 / 0.82);
   --shade: rgb(18 18 17 / 0.62);
   --accent: #dcc6a3;
-  --font-display: 'Display Ampersand', 'Italiana', 'Didot', 'Bodoni 72', Georgia, serif;
+  --font-display: 'Cormorant Garamond', Garamond, 'Times New Roman', Georgia, serif;
   --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   /* Width of the scrolling invitation column; the full viewport on phones. */
   --col: 100vw;
