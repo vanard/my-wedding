@@ -3,11 +3,11 @@ import type { ImageMetadata } from 'astro';
 // The couple's own photos (web versions generated from media-originals/; see src/assets/media/README.md).
 import groom from '../assets/media/groom.jpg';
 import bride from '../assets/media/bride.jpg';
-import coverPhoto from '../assets/media/photo-05.jpg';
-import backdropPoster from '../assets/media/photo-08.jpg';
+import coverPhoto from '../assets/media/cover.jpg';
+import backdropPoster from '../assets/media/background.jpg';
 import backdropVideo from '../assets/media/background.mp4';
-import storyRings from '../assets/media/album/photo-01.jpg';
-import storyHands from '../assets/media/album/img_4301.jpg';
+import storyRings from '../assets/media/story-1.jpg';
+import storyHands from '../assets/media/story-2.jpg';
 import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
 import linkPreview from '../assets/media/link-preview.jpg';
@@ -186,7 +186,7 @@ export const invitation: InvitationContent = {
     text: 'Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Anda berkenan hadir dan memberikan doa restu.',
   },
   photos: {
-    // photo-05: on portrait screens the crop centres on the couple.
+    // cover.jpg: on portrait screens the crop centres on the couple.
     cover: { src: coverPhoto, alt: '', position: '53% 50%' },
     desktop: { src: coverPhoto, alt: '' },
   },
