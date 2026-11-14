@@ -18,8 +18,8 @@ src/assets/media/
 │                                 plays, and instead of it for reduced motion, Data Saver
 │                                 or no JavaScript
 ├── background.mp4                Background video: full teaser (58 s, muted, 720p), before
-│                                 and after opening; 90% of the full height so it is a
-│                                 little less zoomed (thin blurred bands top and bottom)
+│                                 and after opening; 85% of the full height so it is less
+│                                 zoomed (soft blurred bands top and bottom)
 ├── background-blur.mp4           Tiny 192 px copy of the teaser, blurred by CSS, filling
 │                                 the thin soft bands above and below the video
 ├── groom.jpg, bride.jpg          The Groom / The Bride portraits (bride.jpg is a close-up
