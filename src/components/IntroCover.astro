@@ -22,6 +22,11 @@ const date = coverDate(invitation.startsAt, invitation.timeZone);
 </header>
 <style>
   .cover { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; padding: calc(2.5rem + env(safe-area-inset-top)) var(--gutter) calc(2.5rem + env(safe-area-inset-bottom)); text-align: center; overflow: hidden; }
+  /* The names sit lower on taller phones (about 100 px down on a 844 px screen), and keep
+     the 2.5rem minimum on short and landscape screens where space is tight. */
+  @supports (padding-top: 1svh) {
+    .cover { padding-top: calc(clamp(2.5rem, 12svh, 6.5rem) + env(safe-area-inset-top)); }
+  }
   /* While leaving, the cover floats over the revealed invitation and slides away. */
   .cover.is-leaving { position: fixed; z-index: 40; top: 0; right: 0; width: var(--col); height: 100vh; height: 100dvh; transition: transform .9s cubic-bezier(.7, 0, .2, 1), opacity .9s ease; transform: translateY(-100%); opacity: .4; }
   .preview { position: absolute; top: calc(.5rem + env(safe-area-inset-top)); left: 0; right: 0; margin: 0; font-size: .62rem; letter-spacing: .08em; color: var(--muted); }
