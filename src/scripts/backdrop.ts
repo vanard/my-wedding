@@ -1,7 +1,7 @@
-// Background video behind the invitation column. It starts once the page has loaded
-// (after the cover and its photo), plays before and after "Buka Undangan", and fades in
-// over the poster photo when the first frames are ready. Skipped for reduced motion and
-// Data Saver; the poster photo stays instead.
+// Background video behind the invitation column: the whole teaser over a blurred copy of it.
+// Both start once the page has loaded (after the cover and its photo), play before and after
+// "Buka Undangan", and fade in over the poster photo when their first frames are ready.
+// Skipped for reduced motion and Data Saver; the poster photo stays instead.
 interface NetworkInformation { saveData?: boolean }
 
 const interactions = ['pointerdown', 'touchstart', 'keydown', 'scroll'] as const;
@@ -33,11 +33,21 @@ function attempt(video: HTMLVideoElement) {
 }
 
 export function initBackdrop(): () => void {
-  const video = document.querySelector<HTMLVideoElement>('[data-backdrop-video]');
+  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('[data-backdrop-video]'));
   const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
-  if (!video || window.matchMedia('(prefers-reduced-motion: reduce)').matches || connection?.saveData) return () => {};
+  if (!videos.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches || connection?.saveData) return () => {};
 
-  const begin = () => start(video);
+  // The last video is the whole frame; any earlier one is its blurred fill. Keep the fill on
+  // the same frame so the colours around the video always match it.
+  const main = videos[videos.length - 1]!;
+  const fills = videos.slice(0, -1);
+  main.addEventListener('timeupdate', () => {
+    for (const fill of fills) {
+      if (!fill.paused && Math.abs(fill.currentTime - main.currentTime) > 0.3) fill.currentTime = main.currentTime;
+    }
+  });
+
+  const begin = () => videos.forEach(start);
   if (document.readyState === 'complete') begin();
   else window.addEventListener('load', begin, { once: true });
   return begin;

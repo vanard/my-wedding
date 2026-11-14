@@ -43,13 +43,14 @@ test('every visit starts at the cover, including a reload after opening', async 
 test('background video starts loading before opening, but not with reduced motion', async ({ page, browser }) => {
   await page.goto('/?to=Budi');
   // Playback itself depends on the browser's H.264 support; the request is what we control.
-  await expect(page.locator('[data-backdrop-video]')).toHaveAttribute('src', /background\..*\.mp4$/);
+  await expect(page.locator('video.whole[data-backdrop-video]')).toHaveAttribute('src', /\/background\.[^/]*\.mp4$/);
+  await expect(page.locator('video.fill-blur[data-backdrop-video]')).toHaveAttribute('src', /\/background-blur\.[^/]*\.mp4$/);
   await expect(page.locator('#cover')).toBeVisible();
 
   const reduced = await browser.newPage({ reducedMotion: 'reduce' });
   await reduced.goto('/?to=Budi');
   await reduced.waitForLoadState('load');
-  await expect(reduced.locator('[data-backdrop-video]')).not.toHaveAttribute('src', /.+/);
+  for (const video of await reduced.locator('[data-backdrop-video]').all()) await expect(video).not.toHaveAttribute('src', /.+/);
   await reduced.close();
 });
 

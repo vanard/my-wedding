@@ -7,12 +7,24 @@ import { invitation } from '../content/invitation';
 const { backdrop } = invitation;
 ---
 <div class="backdrop" aria-hidden="true">
-  <Photo photo={backdrop.poster} sizes="(min-width: 960px) 600px, 150vw" />
-  <video data-backdrop-video data-src={backdrop.video} muted loop playsinline preload="none" disablepictureinpicture tabindex="-1"></video>
+  {/* First thing every phone shows (and the desktop column): load it with priority. */}
+  <Photo photo={backdrop.poster} sizes="(min-width: 960px) 600px, 150vw" priority />
+  {/* The teaser is landscape and the column is tall: show the whole frame (no crop) over a
+      tiny blurred copy that fills the space above and below. */}
+  <video class="fill-blur" data-backdrop-video data-src={backdrop.blurVideo} muted loop playsinline preload="none" disablepictureinpicture tabindex="-1"></video>
+  <video class="whole" data-backdrop-video data-src={backdrop.video} muted loop playsinline preload="none" disablepictureinpicture tabindex="-1"></video>
 </div>
 <style>
   .backdrop { position: fixed; z-index: -1; top: 0; right: 0; width: var(--col); height: 100vh; height: 100lvh; overflow: hidden; background: var(--bg); }
   .backdrop::after { content: ''; position: absolute; inset: 0; background: var(--shade); }
-  video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
+  video { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
   video.is-playing { opacity: 1; }
+  .fill-blur { object-fit: cover; filter: blur(22px) brightness(.85); transform: scale(1.2); }
+  /* The teaser almost fills the column: --video-height of it (never narrower than the column),
+     so it is a little less zoomed. The thin bands left at the top and bottom show the blurred
+     copy, and the video's edges fade into it so the join is not noticeable. */
+  .backdrop { --video-height: 90%; }
+  .whole { inset: 50% auto auto 50%; width: auto; height: max(var(--video-height), calc(var(--col) * 9 / 16)); aspect-ratio: 16 / 9;
+    transform: translate(-50%, -50%); object-fit: cover;
+    -webkit-mask-image: linear-gradient(transparent, #000 7%, #000 93%, transparent); mask-image: linear-gradient(transparent, #000 7%, #000 93%, transparent); }
 </style>

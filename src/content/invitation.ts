@@ -6,6 +6,7 @@ import bride from '../assets/media/bride.jpg';
 import coverPhoto from '../assets/media/cover.jpg';
 import backdropPoster from '../assets/media/background.jpg';
 import backdropVideo from '../assets/media/background.mp4';
+import backdropBlurVideo from '../assets/media/background-blur.mp4';
 import storyRings from '../assets/media/story-1.jpg';
 import storyHands from '../assets/media/story-2.jpg';
 import clipPoster from '../assets/media/video-clip.jpg';
@@ -85,9 +86,13 @@ export interface InvitationContent {
   closingQuote: { text: string; photo: Photo | null } | null;
   gifts: { text: string; accounts: GiftAccount[] } | null;
   closing: { text: string };
-  photos: { cover: Photo; desktop: Photo };
-  /** Shared background behind the scrolling sections: muted video URL, and the photo shown until it plays. */
-  backdrop: { video: string; poster: Photo };
+  /** Large photo on the left side on desktop (phones show the background video instead). */
+  photos: { desktop: Photo };
+  /**
+   * Shared background behind the invitation column: the muted teaser shown whole (uncropped),
+   * a tiny copy of it blurred to fill the rest of the column, and the photo shown until they play.
+   */
+  backdrop: { video: string; blurVideo: string; poster: Photo };
   /** Image shown when the invitation link is shared (WhatsApp, Instagram, …); 1200×630. */
   linkPreview: Photo;
   music: { src: string | null; title: string };
@@ -205,11 +210,9 @@ export const invitation: InvitationContent = {
     text: 'Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Anda berkenan hadir dan memberikan doa restu.',
   },
   photos: {
-    // cover.jpg: on portrait screens the crop centres on the couple.
-    cover: { src: coverPhoto, alt: '', position: '53% 50%' },
     desktop: { src: coverPhoto, alt: '' },
   },
-  backdrop: { video: backdropVideo, poster: { src: backdropPoster, alt: '' } },
+  backdrop: { video: backdropVideo, blurVideo: backdropBlurVideo, poster: { src: backdropPoster, alt: '' } },
   linkPreview: { src: linkPreview, alt: 'Vian dan Ghea di bawah kerudung saat matahari terbenam' },
   // Put your licensed audio in public/audio/ and set src to '/audio/your-song.mp3'.
   music: { src: null, title: 'Musik undangan' },
