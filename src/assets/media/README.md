@@ -17,7 +17,7 @@ src/assets/media/
 │                                 screen; desktop: right column) until the background video
 │                                 plays, and instead of it for reduced motion, Data Saver
 │                                 or no JavaScript
-├── background.mp4                Background video: full teaser (58 s, muted, 720p), before
+├── background.mp4                Background video: the teaser up to 0:52 (muted, 720p), before
 │                                 and after opening; 85% of the full height so it is less
 │                                 zoomed (soft blurred bands top and bottom)
 ├── background-blur.mp4           Tiny 192 px copy of the teaser, blurred by CSS, filling
@@ -62,17 +62,19 @@ otherwise export as JPEG first.
 ## Video
 
 Encoded with ffmpeg (H.264 + `faststart` so playback starts before the whole
-file downloads). Re-run from the repo root if the source or segment changes:
+file downloads). Re-run from the repo root if the source or segment changes.
+Both stop at 0:52 (`-t 52`, the couple's choice): the black closing title runs
+from about 0:47 to 0:58, so only its first few seconds stay in the loop.
 
 ```sh
-# Background: the full teaser, no audio (CRF 28: it sits behind text and overlays)
-ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" \
+# Background: the teaser up to 0:52, no audio (CRF 28: it sits behind text and overlays)
+ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" -t 52 \
   -an -vf "scale=1280:-2:flags=lanczos,format=yuv420p" -c:v libx264 -profile:v high \
   -preset veryslow -crf 28 -movflags +faststart -map_metadata -1 -map_chapters -1 \
   src/assets/media/background.mp4
 
-# Blurred fill behind it: a tiny copy (the page blurs it), ~200 KB
-ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" \
+# Blurred fill behind it: a tiny copy (the page blurs it), ~200 KB; same length so they loop together
+ffmpeg -i "media-originals/TEASER PREWEDDING GHEA & VIAN .mp4" -t 52 \
   -an -vf "scale=192:-2:flags=area,format=yuv420p" -c:v libx264 -profile:v main \
   -preset veryslow -crf 30 -movflags +faststart -map_metadata -1 -map_chapters -1 \
   src/assets/media/background-blur.mp4
@@ -90,7 +92,7 @@ it starts playing.
 | background.mp4 | 4.9 MB | Automatically, once the page has loaded (before opening) |
 | background-blur.mp4 | 0.2 MB | With background.mp4 |
 
-Budget exception (owner's choice: full teaser as background): background.mp4
+Budget exception (owner's choice: the teaser up to 0:52 as background): background.mp4
 alone is about the whole 5 MB full-visit budget in `AGENTS.md`, so a visit
 with the gallery and music will exceed it. It streams progressively (it can
 start before fully downloaded) but must not block the cover or event details.
