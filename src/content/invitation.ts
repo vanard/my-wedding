@@ -10,6 +10,8 @@ import storyRings from '../assets/media/album/photo-01.jpg';
 import storyHands from '../assets/media/album/img_4301.jpg';
 import clipVideo from '../assets/media/video-clip.mp4';
 import clipPoster from '../assets/media/video-clip.jpg';
+// 1200×630 link preview built from img_4303 by `npm run media:preview`.
+import linkPreview from '../assets/media/link-preview.jpg';
 
 // Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
 const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
@@ -76,6 +78,8 @@ export interface InvitationContent {
   photos: { cover: Photo; desktop: Photo };
   /** Shared background behind the scrolling sections: muted video URL, and the photo shown until it plays. */
   backdrop: { video: string; poster: Photo };
+  /** Image shown when the invitation link is shared (WhatsApp, Instagram, …); 1200×630. */
+  linkPreview: Photo;
   music: { src: string | null; title: string };
 }
 
@@ -187,6 +191,7 @@ export const invitation: InvitationContent = {
     desktop: { src: coverPhoto, alt: '' },
   },
   backdrop: { video: backdropVideo, poster: { src: backdropPoster, alt: '' } },
+  linkPreview: { src: linkPreview, alt: 'Vian dan Ghea di bawah kerudung saat matahari terbenam' },
   // Put your licensed audio in public/audio/ and set src to '/audio/your-song.mp3'.
   music: { src: null, title: 'Musik undangan' },
 };

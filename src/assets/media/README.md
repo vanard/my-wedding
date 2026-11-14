@@ -18,11 +18,14 @@ src/assets/media/
 │                                 then photo-01…04 and photo-07. Every image in
 │                                 this folder is shown automatically, sorted by name
 ├── background.mp4                Background video: full teaser (58 s, muted, 720p),
-│                                 behind all scrolling sections except the opening
-│                                 slideshow and the bride/groom portraits
+│                                 behind the invitation column (except the
+│                                 bride/groom portraits), before and after opening
 ├── video-clip.mp4                Playable video clip with sound (1:51, 720p),
 │                                 shown above the album
-└── video-clip.jpg                Its poster image before play
+├── video-clip.jpg                Its poster image before play
+└── link-preview.jpg              1200×630 image for shared links (WhatsApp, …): img_4303
+                                  trimmed to 4:5 on a blurred background, made by
+                                  `npm run media:preview`
 ```
 
 `media-originals/RENAMES.txt` maps `photo-NN` back to the original file names.
