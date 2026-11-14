@@ -12,6 +12,12 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await expect(page.locator('#cover')).toBeHidden();
   await expect(page.locator('main')).toBeVisible();
+  // The Entry Access Card replaces the greeting pop-up; closing it returns focus to the invitation.
+  const card = page.getByRole('dialog', { name: 'Vian & Ghea' });
+  await expect(card).toBeVisible();
+  await expect(card.locator('[data-guest-name]')).toHaveText('<script>Guest</script>');
+  await page.keyboard.press('Escape');
+  await expect(card).toBeHidden();
   await expect(page.locator('main')).toBeFocused();
   await expect(page.locator('[data-music-player]')).toBeVisible();
   await expect(page.locator('[data-music-toggle]')).toBeDisabled();
@@ -19,6 +25,32 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   await expect(page.getByRole('button', { name: 'Kirim ucapan' })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
+});
+
+test('every visit starts at the cover, including a reload after opening', async ({ page }) => {
+  await page.goto('/?to=Budi');
+  await expect(page.locator('#cover')).toBeVisible();
+  await expect(page.locator('#cover [data-guest-name]')).toHaveText('Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await expect(page.locator('main')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#cover')).toBeVisible();
+  await expect(page.locator('main')).toBeHidden();
+  await page.goto('/?to=Budi#invitation');
+  await expect(page.locator('#cover')).toBeVisible();
+});
+
+test('background video starts loading before opening, but not with reduced motion', async ({ page, browser }) => {
+  await page.goto('/?to=Budi');
+  // Playback itself depends on the browser's H.264 support; the request is what we control.
+  await expect(page.locator('[data-backdrop-video]')).toHaveAttribute('src', /background\..*\.mp4$/);
+  await expect(page.locator('#cover')).toBeVisible();
+
+  const reduced = await browser.newPage({ reducedMotion: 'reduce' });
+  await reduced.goto('/?to=Budi');
+  await reduced.waitForLoadState('load');
+  await expect(reduced.locator('[data-backdrop-video]')).not.toHaveAttribute('src', /.+/);
+  await reduced.close();
 });
 
 test('direct section links open without autoplay and reduced motion skips reveals', async ({ page }) => {
@@ -65,6 +97,7 @@ test('countdown stops gracefully once the event has started', async ({ page }) =
 test('menu opens, closes with Escape and returns focus', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
   const toggle = page.getByRole('button', { name: 'Buka menu' });
   await toggle.click();
   await expect(page.getByRole('navigation', { name: 'Navigasi undangan' })).toBeVisible();
@@ -72,4 +105,54 @@ test('menu opens, closes with Escape and returns focus', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: 'Navigasi undangan' })).toBeHidden();
   await expect(toggle).toBeFocused();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('access card shows a QR only for a well-formed personal code', async ({ page }) => {
+  const code = 'kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA';
+  await page.goto(`/?to=Budi&k=${code}`);
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  const card = page.getByRole('dialog', { name: 'Vian & Ghea' });
+  await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeVisible();
+  await card.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  await page.getByRole('button', { name: 'Kartu akses masuk' }).click();
+  await expect(card).toBeVisible();
+
+  // A malformed or missing code never produces a QR (and nothing from ?k= is rendered as markup).
+  for (const query of ['?to=Budi&k=%3Cimg%20src%3Dx%3E', '?to=Budi']) {
+    await page.goto(`/${query}`);
+    await page.getByRole('link', { name: 'Buka Undangan' }).click();
+    await expect(card.getByText('Kode QR tersedia pada tautan undangan pribadi Anda.')).toBeVisible();
+    await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toHaveCount(0);
+    await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeHidden();
+  }
+});
+
+test('video clip loads YouTube only after the guest presses play, without leaking the guest link', async ({ page }) => {
+  const youtube: string[] = [];
+  page.on('request', (request) => { if (/youtube|ytimg|googlevideo/.test(request.url())) youtube.push(request.url()); });
+  // Keep the test offline: answer the embed request locally.
+  await page.route(/youtube-nocookie\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>player</p>' }));
+  await page.goto('/?to=Budi&k=kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA#gallery');
+  const play = page.getByRole('link', { name: /^Putar Video klip/ });
+  await expect(play).toHaveAttribute('href', 'https://www.youtube.com/watch?v=gpVMepCXalA');
+  await page.waitForLoadState('networkidle');
+  expect(youtube).toEqual([]);
+  await play.click();
+  const player = page.locator('#gallery iframe');
+  await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/gpVMepCXalA\?autoplay=1/);
+  await expect(player).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  await expect(play).toHaveCount(0);
+});
+
+test('floating buttons step aside while the video clip is on screen', async ({ page }) => {
+  await page.goto('/?to=Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
+  const side = page.locator('[data-side-controls]');
+  await expect(side).toBeVisible();
+  await page.locator('[data-video-clip]').scrollIntoViewIfNeeded();
+  await expect(side).toBeHidden();
+  await page.locator('#rsvp').scrollIntoViewIfNeeded();
+  await expect(side).toBeVisible();
 });

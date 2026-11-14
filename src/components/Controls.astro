@@ -2,7 +2,7 @@
 import Icon from './Icon.astro';
 import MusicPlayer from './MusicPlayer.astro';
 import { invitation } from '../content/invitation';
-const { couple, gifts } = invitation;
+const { gifts } = invitation;
 const links = [
   ['#home', 'Beranda'],
   ['#couple', 'Mempelai'],
@@ -23,15 +23,8 @@ const links = [
   </nav>
   <p class="chip glass"><Icon name="mail" size={22} /><span><small>Undangan untuk</small><span class="name" data-guest-name>Tamu Undangan</span></span></p>
 </div>
-<div class="toast" data-toast hidden>
-  <div role="status">
-    <p class="toast-title">Hai, <span data-guest-name>Tamu Undangan</span></p>
-    <p>Anda diundang ke hari pernikahan kami.</p>
-    <p class="toast-sign">{couple.first} &amp; {couple.second}</p>
-  </div>
-  <button type="button" class="toast-close" data-toast-close><Icon name="close" size={16} /><span class="sr-only">Tutup sapaan</span></button>
-</div>
 <div class="side" data-side-controls hidden>
+  <button type="button" class="round glass" data-access-open><Icon name="qr" /><span class="sr-only">Kartu akses masuk</span></button>
   <button type="button" class="round glass" data-fullscreen hidden aria-pressed="false">
     <span class="expand"><Icon name="expand" /></span><span class="shrink"><Icon name="shrink" /></span>
     <span class="sr-only" data-fullscreen-label>Layar penuh</span>
@@ -53,12 +46,9 @@ const links = [
   .chip small { display: block; font-size: .65rem; color: var(--muted); }
   .chip .name { display: block; font-size: .85rem; overflow-wrap: anywhere; }
   @keyframes drop { from { opacity: 0; transform: translateY(-10px); } }
-  .toast { position: fixed; z-index: 32; top: 38%; right: calc(var(--col) / 2); transform: translateX(50%); width: min(calc(var(--col) - 4rem), 17rem); padding: 1.1rem 2.6rem 1rem 1.2rem; border-radius: 8px; background: #fbf9f5; color: #23231f; box-shadow: 0 20px 50px rgb(0 0 0 / 0.35); animation: pop .4s ease both; }
-  .toast p { margin: 0; font-size: .75rem; color: #57534c; }
-  .toast .toast-title { font-size: .9rem; font-weight: 700; color: #23231f; margin-bottom: .3rem; overflow-wrap: anywhere; }
-  .toast .toast-sign { margin-top: .8rem; color: #23231f; }
-  .toast-close { position: absolute; top: .2rem; right: .2rem; display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: none; color: #23231f; }
-  @keyframes pop { from { opacity: 0; transform: translateX(50%) scale(.94); } }
+  /* Out of the way while the video clip is on screen (see src/scripts/video-clip.ts). */
+  :global(.clip-in-view) .menu-toggle, :global(.clip-in-view) .side { opacity: 0; visibility: hidden; pointer-events: none; }
+  .menu-toggle, .side { transition: opacity .25s ease, visibility .25s; }
   .side { position: fixed; z-index: 30; right: calc(.9rem + env(safe-area-inset-right)); bottom: calc(1rem + env(safe-area-inset-bottom)); display: grid; justify-items: end; gap: .6rem; }
   .shrink { display: none; }
   [aria-pressed='true'] .shrink { display: contents; }

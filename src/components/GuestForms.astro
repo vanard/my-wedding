@@ -1,11 +1,7 @@
 ---
 // Forms are a visual foundation. They stay disabled until the API is implemented.
-import Photo from './Photo.astro';
-import { invitation } from '../content/invitation';
-const { photos } = invitation;
 ---
 <section id="rsvp" class="section rsvp" aria-labelledby="rsvp-heading">
-  <div class="bg"><Photo photo={photos.rsvp} /></div>
   <div class="center" data-reveal>
     <h2 id="rsvp-heading">RSVP</h2>
     <p class="small">Bagi tamu undangan yang akan hadir, mohon konfirmasi kehadiran melalui formulir berikut.</p>
@@ -29,7 +25,6 @@ const { photos } = invitation;
   </form>
 </section>
 <section id="wishes" class="section wishes" aria-labelledby="wishes-heading">
-  <div class="bg"><Photo photo={photos.wishes} /></div>
   <div class="center" data-reveal>
     <h2 id="wishes-heading">Wishes</h2>
     <p class="small">Terima kasih telah memberikan ucapan, doa, dan harapan terbaik untuk perjalanan baru kami.</p>
@@ -50,8 +45,7 @@ const { photos } = invitation;
   <button class="button block" type="button" data-wishes-more hidden>Muat ucapan lainnya</button>
 </section>
 <style>
-  .rsvp { --overlay: rgb(18 18 17 / 0.72); }
-  .wishes { --overlay: rgb(18 18 17 / 0.78); }
+  .rsvp, .wishes { background: rgb(18 18 17 / 0.3); }
   form { margin-top: 1.5rem; }
   .notice { font-size: .78rem; color: var(--muted); margin: 1rem 0 0; }
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }

@@ -1,6 +1,7 @@
 ---
 import InvitationLayout from '../layouts/InvitationLayout.astro';
 import DesktopAside from '../components/DesktopAside.astro';
+import Backdrop from '../components/Backdrop.astro';
 import IntroCover from '../components/IntroCover.astro';
 import Hero from '../components/Hero.astro';
 import Couple from '../components/Couple.astro';
@@ -13,6 +14,7 @@ import GuestForms from '../components/GuestForms.astro';
 import Gifts from '../components/Gifts.astro';
 import Closing from '../components/Closing.astro';
 import Controls from '../components/Controls.astro';
+import AccessCard from '../components/AccessCard.astro';
 import { invitation } from '../content/invitation';
 
 const { couple, isPreview } = invitation;
@@ -20,6 +22,7 @@ const title = `${isPreview ? 'Pratinjau · ' : ''}The Wedding of ${couple.first}
 ---
 <InvitationLayout title={title} description={invitation.greeting}>
   <DesktopAside />
+  <Backdrop />
   <div class="column">
     <IntroCover />
     <main id="invitation" tabindex="-1">
@@ -35,6 +38,7 @@ const title = `${isPreview ? 'Pratinjau · ' : ''}The Wedding of ${couple.first}
       <Closing />
     </main>
     <Controls />
+    <AccessCard />
   </div>
   <script>
     import { initInvitation } from '../scripts/invitation';

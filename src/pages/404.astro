@@ -1,0 +1,19 @@
+---
+// Shown by Vercel for any unknown path (e.g. a mistyped or outdated link).
+import InvitationLayout from '../layouts/InvitationLayout.astro';
+import { invitation } from '../content/invitation';
+const { couple } = invitation;
+---
+<InvitationLayout title={`Halaman tidak ditemukan · ${couple.first} & ${couple.second}`} description={invitation.greeting} skipLink={false}>
+  <main class="missing">
+    <p class="eyebrow">The wedding of</p>
+    <h1>{couple.first} &amp; {couple.second}</h1>
+    <p class="muted">Halaman yang Anda cari tidak ditemukan. Mohon periksa kembali tautan undangan Anda.</p>
+    <a class="button" href="/">Buka undangan</a>
+  </main>
+</InvitationLayout>
+<style>
+  .missing { display: grid; place-content: center; justify-items: center; gap: .4rem; min-height: 100vh; min-height: 100svh; padding: 2rem var(--gutter); text-align: center; }
+  h1 { font-size: 3rem; margin: .4rem 0 .6rem; }
+  .muted { max-width: 20rem; margin-bottom: 1.4rem; }
+</style>

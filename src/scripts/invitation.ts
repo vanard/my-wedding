@@ -5,17 +5,11 @@ import { initCountdown } from './countdown';
 import { initGallery } from './gallery';
 import { initCopy } from './copy';
 import { initFullscreen } from './fullscreen';
+import { initBackdrop } from './backdrop';
+import { initAccessCard } from './access-card';
+import { initVideoClip } from './video-clip';
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-function showToast() {
-  const toast = document.querySelector<HTMLElement>('[data-toast]');
-  if (!toast) return;
-  const close = () => { toast.hidden = true; };
-  toast.querySelector('[data-toast-close]')?.addEventListener('click', close);
-  window.setTimeout(() => { toast.hidden = false; }, reducedMotion() ? 0 : 900);
-  window.setTimeout(close, 7000);
-}
 
 export function initInvitation() {
   const cover = document.querySelector<HTMLElement>('#cover');
@@ -28,8 +22,12 @@ export function initInvitation() {
   if (guest) document.querySelectorAll('[data-guest-name]').forEach((element) => { element.textContent = guest; });
 
   const music = initMusic();
+  const startBackdrop = initBackdrop();
+  const showAccessCard = initAccessCard();
+  document.querySelector('[data-access-open]')?.addEventListener('click', () => showAccessCard());
   initCountdown();
   initGallery();
+  initVideoClip();
   initCopy();
 
   let opened = false;
@@ -39,6 +37,7 @@ export function initInvitation() {
     main.hidden = false;
     document.querySelectorAll<HTMLElement>('[data-menu-toggle], [data-side-controls]').forEach((element) => { element.hidden = false; });
     music.open(playMusic);
+    startBackdrop();
     initMenu();
     initFullscreen();
     main.focus({ preventScroll: true });
@@ -56,17 +55,19 @@ export function initInvitation() {
     event.preventDefault();
     window.scrollTo({ top: 0, behavior: 'auto' });
     open(true, true);
-    showToast();
-    history.replaceState(null, '', `${location.pathname}${location.search}#invitation`);
+    // Instead of a greeting pop-up, show the guest's Entry Access Card; closing it returns to the invitation.
+    showAccessCard(() => main.focus({ preventScroll: true }));
   });
   document.querySelector('.skip-link')?.addEventListener('click', () => open(false, false));
 
-  // Direct section links work, but never bypass the browser's music gesture rules.
+  // Every visit starts at the cover (who is invited + "Buka Undangan"). Only a link to a
+  // specific section such as #rsvp skips it, and never bypasses the music gesture rules.
   const section = document.getElementById(location.hash.slice(1));
-  if (section && (section === main || main.contains(section))) {
+  if (section && section !== main && main.contains(section)) {
     open(false, false);
     section.scrollIntoView();
   } else {
+    if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
     // Applied only after the opening handler is ready. Without JS all content stays readable.
     main.hidden = true;
   }
