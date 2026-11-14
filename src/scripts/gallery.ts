@@ -120,6 +120,13 @@ export function initGallery() {
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
   dialog.addEventListener('close', () => { image.removeAttribute('src'); opener?.focus(); });
 
+  // No zooming photos in the viewer. `touch-action: none` (Gallery.astro) covers touch
+  // screens; these cover Safari's pinch gestures and trackpad pinch (ctrl + wheel).
+  const noZoom = (event: Event) => event.preventDefault();
+  dialog.addEventListener('gesturestart', noZoom);
+  dialog.addEventListener('gesturechange', noZoom);
+  dialog.addEventListener('wheel', (event) => { if (event.ctrlKey) event.preventDefault(); }, { passive: false });
+
   let startX: number | null = null;
   dialog.addEventListener('touchstart', (event) => { startX = event.touches[0]?.clientX ?? null; }, { passive: true });
   dialog.addEventListener('touchend', (event) => {

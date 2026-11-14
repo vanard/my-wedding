@@ -186,9 +186,22 @@ test('album is shuffled so photos from the same moment never touch, and the view
   expect(touching).toBe(0);
   const third = page.locator('[data-gallery-item]').nth(2);
   const href = await third.getAttribute('href');
+  // Photos do not enlarge on hover.
+  await third.hover();
+  expect(await third.locator('img').evaluate((img) => getComputedStyle(img).transform)).toBe('none');
   await third.click();
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^3 \/ \d+$/);
   expect(await page.locator('[data-lightbox-image]').getAttribute('src')).toContain(href!);
+
+  // The viewer is a slideshow only: no pinch/double-tap zoom, no trackpad (ctrl + wheel) zoom.
+  const viewer = page.locator('[data-lightbox]');
+  expect(await viewer.evaluate((dialog) => getComputedStyle(dialog).touchAction)).toBe('none');
+  expect(await viewer.evaluate((dialog) => {
+    const wheel = new WheelEvent('wheel', { ctrlKey: true, deltaY: -10, bubbles: true, cancelable: true });
+    return dialog.querySelector('img')!.dispatchEvent(wheel);
+  })).toBe(false);
+  await page.getByRole('button', { name: 'Foto berikutnya' }).click();
+  await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
 test('more gift accounts open in a pop-up with their own copy status, and close back to the button', async ({ page, context, browserName }) => {

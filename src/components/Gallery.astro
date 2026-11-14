@@ -67,9 +67,11 @@ if (unknown.length) throw new Error(`gallery.moments names photos that are not i
   .grid { columns: 2; column-gap: .6rem; list-style: none; padding: 0; margin: 2rem 0 0; }
   li { break-inside: avoid; margin-bottom: .6rem; }
   li a { display: block; border-radius: 8px; overflow: hidden; }
-  li :global(.tile) { width: 100%; height: auto; transition: transform .5s ease; }
-  li a:hover :global(.tile) { transform: scale(1.04); }
+  li :global(.tile) { width: 100%; height: auto; }
   .lightbox { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(12 12 11 / 0.96); color: var(--ink); }
+  /* Photos are not zoomable in the viewer: no pinch or double-tap zoom (swipes still work,
+     see gallery.ts). Zooming the page itself outside the viewer is left to the browser. */
+  .lightbox { touch-action: none; }
   .lightbox[open] { display: grid; place-items: center; }
   .lightbox::backdrop { background: rgb(12 12 11 / 0.9); }
   .lightbox img { max-width: calc(100vw - 2rem); max-height: calc(100dvh - 8rem); object-fit: contain; border-radius: 6px; }
