@@ -121,26 +121,25 @@ export const invitation: InvitationContent = {
   couple: { first: 'Vian', second: 'Ghea' },
   hashtag: '#GHEArtofVIAN',
   greeting: 'Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.',
-  // TEMPORARY: replace with the couple's chosen verse or quote.
   quote: {
-    text: 'Cinta tidak saling menatap, tetapi bersama-sama memandang ke arah yang sama.',
-    source: 'Antoine de Saint-Exupéry',
+    text: 'Beberapa pertemuan memilih caranya sendiri, salah satunya lewat mimpi.',
+    source: '',
   },
   // Sunday 20 December 2026, Mataram (WITA, UTC+8).
   startsAt: '2026-12-20T08:30:00+08:00',
   timeZone: 'Asia/Makassar',
   people: [
     {
-      label: 'Mempelai Pria',
-      fullName: 'Vian Rasyid Diyatma',
+      label: 'The Groom',
+      fullName: 'Vian Rasyid Diyatma, S.Kom.',
       parentLine: 'Putra Kedua Dari',
       parents: 'Bapak (Alm.) Dayat, S.Pd. M.Pd. & Ibu Fatmawati Nurhayaningsih, SKM.',
       instagram: "@vian_rd",
       photo: { src: groom, alt: 'Vian Rasyid Diyatma tersenyum mengenakan jas krem di tepi pantai', position: '45% 50%' },
     },
     {
-      label: 'Mempelai Wanita',
-      fullName: 'Ghea Citra Melani',
+      label: 'The Bride',
+      fullName: 'Ghea Citra Melani, S.Tr.Kes.',
       parentLine: 'Putri Ketiga Dari',
       parents: 'Bapak Mukillah & Ibu Dra. Pahriyah',
       instagram: '@gheacm',
@@ -197,17 +196,8 @@ export const invitation: InvitationContent = {
       mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Asrama+Haji+Mataram+NTB',
     },
   ],
-  // TEMPORARY palette.
-  dressCode: {
-    text: 'Kami mengundang Anda untuk mengenakan palet warna berikut agar foto bersama terlihat serasi.',
-    colors: [
-      { name: 'Krem', hex: '#efe6d8' },
-      { name: 'Pasir', hex: '#dcc7ad' },
-      { name: 'Merah muda', hex: '#e4b0b5' },
-      { name: 'Karamel', hex: '#c99b6c' },
-      { name: 'Cokelat', hex: '#9a7550' },
-    ],
-  },
+  // No dress-code section (removed by the couple). To show one, set { text, colors: [{ name, hex }] }.
+  dressCode: null,
   // Set url when a streaming link exists; set the whole field to null to hide the section.
   liveStream: { platform: 'YouTube', url: null },
   gallery: {

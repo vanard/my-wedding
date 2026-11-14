@@ -64,7 +64,7 @@ controls appear after opening.
 ## Content and audio
 
 Edit the typed content file. Anything still marked TEMPORARY there is a placeholder
-(currently the opening quote and the dress-code palette; check with
+(none at the moment; check with
 `grep -n TEMPORARY src/content/invitation.ts`). Set `isPreview` to false only after
 replacing it.
 
