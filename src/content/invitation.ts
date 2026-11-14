@@ -255,6 +255,6 @@ export const invitation: InvitationContent = {
   },
   backdrop: { video: backdropVideo, blurVideo: backdropBlurVideo, poster: { src: backdropPoster, alt: '' } },
   linkPreview: { src: linkPreview, alt: 'Vian dan Ghea di bawah kerudung saat matahari terbenam' },
-  // Put your licensed audio in public/audio/ and set src to '/audio/your-song.mp3'.
-  music: { src: null, title: 'Musik undangan' },
+  // The full audio track of the prewedding video clip (see public/audio/README.md).
+  music: { src: '/audio/music.mp3', title: 'Musik undangan' },
 };

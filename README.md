@@ -75,9 +75,10 @@ around 2000 px on the long edge are enough. Use `position` to adjust cropping.
 Set `liveStream`, `dressCode`, `closingQuote` or `gifts` to `null` to hide a section.
 A gift account with `value: null` shows "Belum tersedia" and no copy button.
 
-Place a licensed MP3 in `public/audio/` and set `music.src`. No audio file is
-supplied; the player stays disabled until configured. Music pauses when the tab
-is hidden and requires a tap to resume. The display font (Cormorant Garamond,
+Music: `public/audio/music.mp3`, the full audio track of the prewedding video clip
+(≈1.8 MB, see `public/audio/README.md`). It starts from the "Buka Undangan" tap, is not
+preloaded, pauses when the tab is hidden or the video clip plays, and requires a tap to
+resume. `music.src: null` disables the player. The display font (Cormorant Garamond,
 SIL OFL) is self-hosted via `@fontsource/cormorant-garamond`; body text uses system fonts.
 
 ## RSVP, wishes and check-in
@@ -203,9 +204,14 @@ Vercel Hobby is for personal, non-commercial use and includes per month about
 invocations; CLI uploads are limited to 100 MB. Sources:
 https://vercel.com/docs/limits and https://vercel.com/docs/limits/fair-use-guidelines.
 
-Rough transfer estimate per first visit: ≈5.5 MB (background video 4.9 MB, photos,
-fonts and scripts); the video clip streams from YouTube and adds nothing here.
-3,000 visits is roughly 17 GB; repeat visits reuse cached `/_astro/` files. These are estimates, not measurements or guarantees.
+Rough transfer estimate per first visit: ≈7.3 MB (background video 4.9 MB, music
+1.8 MB, photos, fonts and scripts); the video clip streams from YouTube and adds nothing
+here. 3,000 visits is roughly 22 GB; repeat visits reuse cached files. These are
+estimates, not measurements or guarantees.
+
+Budget exception: a full visit is above the 5 MB aim in `AGENTS.md`, mainly because of
+the background video and the music. Neither blocks the first screen (the video starts
+after the cover; the music only from the opening tap).
 
 Use the launch checklist and budgets in `AGENTS.md` before distributing links.
 Physical phone testing and the 1,000-guest/100-concurrent scenario remain launch checks.

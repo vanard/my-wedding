@@ -20,7 +20,7 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   await expect(card).toBeHidden();
   await expect(page.locator('main')).toBeFocused();
   await expect(page.locator('[data-music-player]')).toBeVisible();
-  await expect(page.locator('[data-music-toggle]')).toBeDisabled();
+  await expect(page.locator('[data-music-toggle]')).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Kirim konfirmasi' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Kirim ucapan' })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -81,11 +81,34 @@ test('requests music from the opening gesture and reports rejected playback', as
       return Promise.reject(new DOMException('Blocked in test', 'NotAllowedError'));
     };
   });
+  const audioRequests: string[] = [];
+  page.on('request', (request) => { if (request.url().includes('/audio/')) audioRequests.push(request.url()); });
   await page.goto('/');
-  await page.locator('audio').evaluate((audio) => audio.setAttribute('src', '/audio/test.mp3'));
+  // The soundtrack is configured but not downloaded before the guest opens the invitation.
+  await expect(page.locator('audio')).toHaveAttribute('src', '/audio/music.mp3');
+  // Not 'networkidle': the background video keeps streaming.
+  await page.waitForLoadState('load');
+  await page.waitForTimeout(1000);
+  expect(audioRequests).toEqual([]);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await expect(page.locator('[data-music-status]')).toHaveText('Ketuk tombol untuk memutar musik.');
   await expect(page.locator('main')).toBeVisible();
+});
+
+test('the soundtrack file is served and plays as audio', async ({ page, browserName }) => {
+  const response = await page.request.get('/audio/music.mp3');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('audio/mpeg');
+  // Chromium in Playwright lacks proprietary codecs; WebKit decodes MP3 like real browsers.
+  test.skip(browserName === 'chromium', 'MP3 decoding is checked in WebKit');
+  await page.goto('/');
+  const duration = await page.locator('audio').evaluate((audio: HTMLAudioElement) => new Promise<number>((resolve, reject) => {
+    audio.preload = 'metadata';
+    audio.addEventListener('loadedmetadata', () => resolve(audio.duration), { once: true });
+    audio.addEventListener('error', () => reject(new Error('audio error')), { once: true });
+    audio.load();
+  }));
+  expect(duration).toBeGreaterThan(110);
 });
 
 test('countdown stops gracefully once the event has started', async ({ page }) => {
