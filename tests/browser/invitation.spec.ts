@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+// A well-formed personal code: RSVP, Wedding Gift and the Entry Access Card appear only with one.
+const CODE = 'kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA';
+
 test('opens the invitation, safely greets the guest, and keeps unconnected forms disabled', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/?to=%3Cscript%3EGuest%3C%2Fscript%3E');
+  await page.goto(`/?to=%3Cscript%3EGuest%3C%2Fscript%3E&k=${CODE}`);
   const names = page.locator('[data-guest-name]');
   await expect(names.first()).toHaveText('<script>Guest</script>');
   expect(await names.allTextContents()).toEqual(Array(await names.count()).fill('<script>Guest</script>'));
@@ -21,8 +24,9 @@ test('opens the invitation, safely greets the guest, and keeps unconnected forms
   await expect(page.locator('main')).toBeFocused();
   await expect(page.locator('[data-music-player]')).toBeVisible();
   await expect(page.locator('[data-music-toggle]')).toBeEnabled();
+  // RSVP stays disabled until the party loads from the API (not running here). Wishes without a
+  // personal code are covered in guest-forms.spec.ts.
   await expect(page.getByRole('button', { name: 'Kirim konfirmasi' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Kirim ucapan' })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
@@ -56,11 +60,15 @@ test('background video starts loading before opening, but not with reduced motio
 
 test('direct section links open without autoplay and reduced motion skips reveals', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/#rsvp');
+  await page.goto(`/?k=${CODE}#rsvp`);
   await expect(page.locator('main')).toBeVisible();
   await expect(page.locator('#cover')).toBeHidden();
   await expect(page.locator('[data-music-player]')).toBeVisible();
   await expect(page.locator('.reveal-active')).toHaveCount(0);
+  // Without a personal code the RSVP section is hidden, so its link starts at the cover.
+  await page.goto('/#rsvp');
+  await expect(page.locator('#cover')).toBeVisible();
+  await expect(page.locator('main')).toBeHidden();
 });
 
 test('essential content remains readable without JavaScript at 320px', async ({ browser }) => {
@@ -156,7 +164,6 @@ test('countdown stops gracefully once the event has started', async ({ page }) =
 test('menu opens, closes with Escape and returns focus', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
-  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
   const toggle = page.getByRole('button', { name: 'Buka menu' });
   await toggle.click();
   await expect(page.getByRole('navigation', { name: 'Navigasi undangan' })).toBeVisible();
@@ -167,8 +174,7 @@ test('menu opens, closes with Escape and returns focus', async ({ page }) => {
 });
 
 test('access card shows a QR only for a well-formed personal code', async ({ page }) => {
-  const code = 'kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA';
-  await page.goto(`/?to=Budi&k=${code}`);
+  await page.goto(`/?to=Budi&k=${CODE}`);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   const card = page.getByRole('dialog', { name: 'Vian & Ghea' });
   await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toBeVisible();
@@ -195,13 +201,22 @@ test('access card shows a QR only for a well-formed personal code', async ({ pag
   await expect(card).toBeHidden();
   await expect(menuToggle).toBeFocused();
 
-  // A malformed or missing code never produces a QR (and nothing from ?k= is rendered as markup).
+  // A malformed or missing code: no card, no QR buttons, and no RSVP or Wedding Gift (nothing
+  // from ?k= is rendered as markup). The rest of the invitation, including Ucapan, stays.
   for (const query of ['?to=Budi&k=%3Cimg%20src%3Dx%3E', '?to=Budi']) {
     await page.goto(`/${query}`);
     await page.getByRole('link', { name: 'Buka Undangan' }).click();
-    await expect(card.getByText('Kode QR tersedia pada tautan undangan pribadi Anda.')).toBeVisible();
-    await expect(card.getByRole('img', { name: 'Kode QR akses masuk' })).toHaveCount(0);
-    await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeHidden();
+    await expect(page.locator('main')).toBeVisible();
+    await expect(card).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Kartu akses masuk', exact: true })).toBeHidden();
+    for (const id of ['#rsvp', '#gift']) await expect(page.locator(id)).toBeHidden();
+    await expect(page.locator('#wishes')).toBeVisible();
+    await page.getByRole('button', { name: 'Buka menu' }).click();
+    const menu = page.locator('[data-menu]');
+    await expect(menu.getByRole('link', { name: 'Ucapan' })).toBeVisible();
+    for (const name of ['RSVP', 'Hadiah']) await expect(menu.getByRole('link', { name })).toBeHidden();
+    await expect(menu.getByRole('button', { name: 'Kartu Akses Masuk (QR)' })).toBeHidden();
+    expect(await page.locator('img[src*="%3C"], img[src="x"]').count()).toBe(0);
   }
 });
 
@@ -210,7 +225,7 @@ test('video clip loads YouTube only after the guest presses play, without leakin
   page.on('request', (request) => { if (/youtube|ytimg|googlevideo/.test(request.url())) youtube.push(request.url()); });
   // Keep the test offline: answer the embed request locally.
   await page.route(/youtube-nocookie\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>player</p>' }));
-  await page.goto('/?to=Budi&k=kpk_0hkCQQOrXLaeUWPjp8NW2WoydQPBql6QLbhj9WA#gallery');
+  await page.goto(`/?to=Budi&k=${CODE}#gallery`);
   const play = page.getByRole('link', { name: /^Putar Video klip/ });
   await expect(play).toHaveAttribute('href', 'https://www.youtube.com/watch?v=gpVMepCXalA');
   await page.waitForLoadState('networkidle');
@@ -225,19 +240,17 @@ test('video clip loads YouTube only after the guest presses play, without leakin
 test('floating buttons step aside while the video clip is on screen', async ({ page }) => {
   await page.goto('/?to=Budi');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
-  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
   const side = page.locator('[data-side-controls]');
   await expect(side).toBeVisible();
   await page.locator('[data-video-clip]').scrollIntoViewIfNeeded();
   await expect(side).toBeHidden();
-  await page.locator('#rsvp').scrollIntoViewIfNeeded();
+  await page.locator('#wishes').scrollIntoViewIfNeeded();
   await expect(side).toBeVisible();
 });
 
 test('album is shuffled so photos from the same moment never touch, and the viewer follows the order', async ({ page }) => {
   await page.goto('/?to=Budi');
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
-  await page.getByRole('button', { name: 'Tutup kartu akses' }).click();
   await page.locator('#gallery').scrollIntoViewIfNeeded();
   const touching = await page.evaluate(() => {
     const tiles = [...document.querySelectorAll<HTMLElement>('[data-gallery] li')].map((li) => ({ moment: li.dataset.moment, box: li.getBoundingClientRect() }));
@@ -274,7 +287,7 @@ test('album is shuffled so photos from the same moment never touch, and the view
 });
 
 test('only the main gift accounts are shown; the extra accounts and their button are hidden', async ({ page }) => {
-  await page.goto('/');
+  await page.goto(`/?to=Budi&k=${CODE}`);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
   const gift = page.locator('#gift');
@@ -286,6 +299,7 @@ test('only the main gift accounts are shown; the extra accounts and their button
   for (const value of ['1310015634357', '0700237524', '901279716707', '082237058889']) expect(html).not.toContain(value);
 });
 
+// Without JavaScript the personal-code check cannot run, so the gift section stays readable.
 test('without JavaScript the extra gift accounts stay hidden too', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();

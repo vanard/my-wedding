@@ -148,14 +148,13 @@ test('wishes: listed as plain text with paging; a retried wish reuses its key', 
   expect(keys[1]).toBe(keys[0]);
 });
 
-test('without a personal code the forms stay closed, and the invitation still works if the API is down', async ({ page }) => {
+test('without a personal code RSVP is hidden, wishes cannot be sent, and the invitation still works if the API is down', async ({ page }) => {
   let guestCalls = 0;
   await page.route('**/api/guest', (route) => { guestCalls++; return route.abort(); });
   await page.route('**/api/wishes?*', (route) => route.fulfill(json({ error: { code: 'DB_UNAVAILABLE', message: 'Layanan sedang tidak tersedia.' } }, 503)));
   await openInvitation(page, '?to=Tamu');
   await page.locator('#wishes').scrollIntoViewIfNeeded();
-  await expect(page.locator('[data-rsvp-note]')).toContainText('tautan undangan pribadi');
-  await expect(page.getByRole('button', { name: 'Kirim konfirmasi' })).toBeDisabled();
+  await expect(page.locator('#rsvp')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Kirim ucapan' })).toBeDisabled();
   await expect(page.locator('[data-wishes-list-status]')).toHaveText('Layanan sedang tidak tersedia.');
   expect(guestCalls).toBe(0);

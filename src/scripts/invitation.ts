@@ -8,6 +8,7 @@ import { initGiftMore } from './gift-more';
 import { initFullscreen } from './fullscreen';
 import { initBackdrop } from './backdrop';
 import { initAccessCard } from './access-card';
+import { guestCode } from './guest-code';
 import { initVideoClip } from './video-clip';
 import { initGuestForms } from './guest-forms';
 
@@ -22,6 +23,14 @@ export function initInvitation() {
   // `?to=` is only a display greeting. textContent keeps it from being parsed as HTML.
   const guest = new URLSearchParams(window.location.search).get('to')?.trim().slice(0, 100);
   if (guest) document.querySelectorAll('[data-guest-name]').forEach((element) => { element.textContent = guest; });
+
+  // Guest-only parts (RSVP, Wedding Gift, the Entry Access Card and its buttons, marked
+  // data-personal) appear only for a link with a well-formed personal code: the same check
+  // that lets the card show a QR. This tidies the page for visitors without a personal link;
+  // it is not access control (the server checks the code, and the gift details stay in the HTML).
+  // Without JavaScript nothing is hidden.
+  const personal = guestCode() !== null;
+  if (!personal) document.querySelectorAll<HTMLElement>('[data-personal]').forEach((element) => { element.hidden = true; });
 
   const music = initMusic();
   const startBackdrop = initBackdrop();
@@ -66,14 +75,14 @@ export function initInvitation() {
     window.scrollTo({ top: 0, behavior: 'auto' });
     open(true, true);
     // Instead of a greeting pop-up, show the guest's Entry Access Card; closing it returns to the invitation.
-    showAccessCard(() => main.focus({ preventScroll: true }));
+    if (personal) showAccessCard(() => main.focus({ preventScroll: true }));
   });
   document.querySelector('.skip-link')?.addEventListener('click', () => open(false, false));
 
   // Every visit starts at the cover (who is invited + "Buka Undangan"). Only a link to a
   // specific section such as #rsvp skips it, and never bypasses the music gesture rules.
   const section = document.getElementById(location.hash.slice(1));
-  if (section && section !== main && main.contains(section)) {
+  if (section && section !== main && main.contains(section) && !section.closest('[hidden]:not(main)')) {
     open(false, false);
     section.scrollIntoView();
   } else {

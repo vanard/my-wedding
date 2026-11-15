@@ -101,9 +101,13 @@ How it works:
 - **Entry Access Card**: its QR opens `/checkin/#<code>`. Staff phones signed in with
   `CHECKIN_KEY` record the arrival; a second scan shows "Sudah check-in sebelumnya".
   Staff can also search by name for guests without their QR.
-- Links without `k` (or opened by someone else) can read the invitation but cannot RSVP
-  or write wishes. Nothing contacts the database until a guest scrolls near the forms;
-  if the database is down, only these forms show an error.
+- Links without a well-formed `k` show the invitation without the guest-only parts: the
+  RSVP and Wedding Gift sections, the Entry Access Card and its buttons/menu item are
+  hidden (`data-personal`, see `src/scripts/invitation.ts`). Approved wishes stay visible,
+  but sending one needs a personal link. This only tidies the page: the server still checks
+  every code, and the gift details remain in the page source. Without JavaScript nothing
+  is hidden. Nothing contacts the database until a guest scrolls near the forms; if the
+  database is down, only these forms show an error.
 - Abuse limits live in the database (shared by all function instances): per party, 10 RSVP
   changes and 3 wishes per 10 minutes, at most 10 wishes in total. Wrong codes are
   rejected before any database work.

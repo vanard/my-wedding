@@ -3,14 +3,15 @@ import Icon from './Icon.astro';
 import MusicPlayer from './MusicPlayer.astro';
 import { invitation } from '../content/invitation';
 const { gifts } = invitation;
-const links = [
+// `personal`: guest-only sections, hidden without a valid personal code (see invitation.ts).
+const links: [string, string, boolean?][] = [
   ['#home', 'Beranda'],
   ['#couple', 'Mempelai'],
   ['#event', 'Acara'],
   ['#gallery', 'Galeri'],
-  ['#rsvp', 'RSVP'],
+  ['#rsvp', 'RSVP', true],
   ['#wishes', 'Ucapan'],
-  ...(gifts ? [['#gift', 'Hadiah']] : []),
+  ...(gifts ? [['#gift', 'Hadiah', true] as [string, string, boolean]] : []),
 ];
 ---
 <button type="button" class="menu-toggle glass" aria-expanded="false" aria-controls="site-menu" data-menu-toggle hidden>
@@ -19,15 +20,15 @@ const links = [
 <div id="site-menu" class="menu" data-menu hidden>
   <nav class="panel glass" aria-label="Navigasi undangan">
     <button type="button" class="close glass" data-menu-close>Tutup</button>
-    <ul>{links.map(([href, label]) => <li><a href={href} data-menu-link>{label}</a></li>)}</ul>
+    <ul>{links.map(([href, label, personal]) => <li data-personal={personal ? '' : undefined}><a href={href} data-menu-link>{label}</a></li>)}</ul>
     {/* Reopens the Entry Access Card (same as the round QR button), labelled so guests who
         closed the card can find it again. */}
-    <button type="button" class="access" data-access-open data-menu-link aria-haspopup="dialog"><Icon name="qr" size={20} />Kartu Akses Masuk (QR)</button>
+    <button type="button" class="access" data-access-open data-menu-link data-personal aria-haspopup="dialog"><Icon name="qr" size={20} />Kartu Akses Masuk (QR)</button>
   </nav>
   <p class="chip glass"><Icon name="mail" size={22} /><span><small>Undangan untuk</small><span class="name" data-guest-name>Tamu Undangan</span></span></p>
 </div>
 <div class="side" data-side-controls hidden>
-  <button type="button" class="round glass" data-access-open><Icon name="qr" /><span class="sr-only">Kartu akses masuk</span></button>
+  <button type="button" class="round glass" data-access-open data-personal><Icon name="qr" /><span class="sr-only">Kartu akses masuk</span></button>
   <button type="button" class="round glass" data-fullscreen hidden aria-pressed="false">
     <span class="expand"><Icon name="expand" /></span><span class="shrink"><Icon name="shrink" /></span>
     <span class="sr-only" data-fullscreen-label>Layar penuh</span>
