@@ -31,7 +31,7 @@ if (oversized.length) {
 // `file` (name without folder) is what `gallery.moments` refers to.
 const album: (Photo & { file: string })[] = Object.keys(albumFiles).sort().map((file, index) => ({
   src: albumFiles[file]!,
-  alt: `Foto prewedding Vian dan Ghea ${index + 1}`,
+  alt: `Foto Vian dan Ghea ${index + 1}`,
   file: file.split('/').pop()!,
 }));
 
@@ -218,6 +218,7 @@ export const invitation: InvitationContent = {
       ['img_4293b.jpg', 'img_4297.jpg', 'img_4298.jpg'], // veil
       ['img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
       ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
+      ['img_4087.jpg', 'img_4113.jpg', 'img_4117.jpg'], // engagement: at the flower wall
     ],
   },
   closingQuote: {
