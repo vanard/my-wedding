@@ -175,14 +175,25 @@ test('access card shows a QR only for a well-formed personal code', async ({ pag
   await expect(card.getByRole('button', { name: 'Simpan Kartu' })).toBeVisible();
   await card.getByRole('button', { name: 'Tutup kartu akses' }).click();
   // Keyboard users: the card reopens from the QR button and focus returns there on Escape.
-  const qrButton = page.getByRole('button', { name: 'Kartu akses masuk' });
+  const qrButton = page.getByRole('button', { name: 'Kartu akses masuk', exact: true });
   await qrButton.focus();
   await page.keyboard.press('Enter');
   await expect(card).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(qrButton).toBeFocused();
-  await page.getByRole('button', { name: 'Kartu akses masuk' }).click();
+  await page.getByRole('button', { name: 'Kartu akses masuk', exact: true }).click();
   await expect(card).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  // Closed by accident: the menu has a labelled item that reopens it and then closes the menu.
+  const menuToggle = page.getByRole('button', { name: 'Buka menu' });
+  await menuToggle.click();
+  await page.getByRole('button', { name: 'Kartu Akses Masuk (QR)' }).click();
+  await expect(card).toBeVisible();
+  await expect(page.locator('[data-menu]')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(card).toBeHidden();
+  await expect(menuToggle).toBeFocused();
 
   // A malformed or missing code never produces a QR (and nothing from ?k= is rendered as markup).
   for (const query of ['?to=Budi&k=%3Cimg%20src%3Dx%3E', '?to=Budi']) {

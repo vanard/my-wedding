@@ -20,6 +20,9 @@ const links = [
   <nav class="panel glass" aria-label="Navigasi undangan">
     <button type="button" class="close glass" data-menu-close>Tutup</button>
     <ul>{links.map(([href, label]) => <li><a href={href} data-menu-link>{label}</a></li>)}</ul>
+    {/* Reopens the Entry Access Card (same as the round QR button), labelled so guests who
+        closed the card can find it again. */}
+    <button type="button" class="access" data-access-open data-menu-link aria-haspopup="dialog"><Icon name="qr" size={20} />Kartu Akses Masuk (QR)</button>
   </nav>
   <p class="chip glass"><Icon name="mail" size={22} /><span><small>Undangan untuk</small><span class="name" data-guest-name>Tamu Undangan</span></span></p>
 </div>
@@ -42,6 +45,8 @@ const links = [
   ul { list-style: none; padding: 0; margin: 0; }
   li a { display: flex; align-items: center; min-height: 44px; font-size: 1.05rem; text-decoration: none; }
   li a:hover { text-decoration: underline; }
+  .access { display: flex; align-items: center; gap: .6rem; width: 100%; min-height: 44px; margin-top: .6rem; padding: .7rem 0 0; border: 0; border-top: 1px solid rgb(244 240 232 / 0.18); background: none; color: var(--ink); font: inherit; font-size: 1.05rem; text-align: left; cursor: pointer; }
+  .access:hover { text-decoration: underline; }
   .chip { display: inline-flex; align-items: center; gap: .75rem; margin: .6rem 0 0; padding: .6rem 1rem; border-radius: 10px; animation: drop .35s .08s ease both; }
   .chip small { display: block; font-size: .65rem; color: var(--muted); }
   .chip .name { display: block; font-size: .85rem; overflow-wrap: anywhere; }

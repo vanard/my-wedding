@@ -26,7 +26,13 @@ export function initInvitation() {
   const music = initMusic();
   const startBackdrop = initBackdrop();
   const showAccessCard = initAccessCard();
-  document.querySelector('[data-access-open]')?.addEventListener('click', () => showAccessCard());
+  // The round QR button and the menu item both open the card. The menu closes when its item is
+  // used, so focus then returns to the menu button instead of the hidden item.
+  const menuToggle = document.querySelector<HTMLElement>('[data-menu-toggle]');
+  document.querySelectorAll<HTMLElement>('[data-access-open]').forEach((button) => {
+    const inMenu = button.closest('[data-menu]') !== null;
+    button.addEventListener('click', () => showAccessCard(inMenu ? () => menuToggle?.focus() : undefined));
+  });
   initCountdown();
   initGallery();
   initVideoClip();
