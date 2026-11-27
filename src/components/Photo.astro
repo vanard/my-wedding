@@ -11,6 +11,22 @@ interface Props {
   priority?: boolean;
 }
 const { photo, widths = [480, 768, 1080], sizes = '(min-width: 960px) 480px, 100vw', class: className = 'fill', priority = false } = Astro.props;
+
+// Cropped photos: .fill (full-bleed backgrounds) and .thumb (square). iOS Safari sometimes
+// paints an `object-fit: cover` image stretched to its box (seen on an iPhone 15: the groom's
+// portrait squeezed). Here the <picture> is the crop window and the image inside keeps the
+// photo's own proportions (--ar), placed by --x/--y like object-position, so even a stretched
+// paint is not distorted. See `picture.crop` in global.css.
+const cropped = className === 'fill' || className === 'thumb';
+const [x, y] = (photo.position ?? '50% 50%').split(/\s+/).map((part) => {
+  const match = /^(\d+(?:\.\d+)?)%$/.exec(part);
+  if (!match) throw new Error(`Photo position must be two percentages, e.g. '50% 30%'; got '${photo.position}'.`);
+  return Number(match[1]) / 100;
+});
+const style = [
+  cropped && `--ar: ${(photo.src.width / photo.src.height).toFixed(4)}; --x: ${x}; --y: ${y ?? x}`,
+  photo.position && `object-position: ${photo.position}`,
+].filter(Boolean).join('; ') || undefined;
 ---
 <Picture
   src={photo.src}
@@ -22,5 +38,6 @@ const { photo, widths = [480, 768, 1080], sizes = '(min-width: 960px) 480px, 100
   loading={priority ? 'eager' : 'lazy'}
   decoding="async"
   fetchpriority={priority ? 'high' : undefined}
-  style={photo.position ? `object-position: ${photo.position}` : undefined}
+  style={style}
+  pictureAttributes={cropped ? { class: `crop crop-${className}` } : undefined}
 />

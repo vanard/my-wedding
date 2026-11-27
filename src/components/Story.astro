@@ -18,7 +18,8 @@ const { story, couple } = invitation;
 <style>
   .photos { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; max-width: 20rem; margin: 0 auto 2.5rem; }
   .photos.single { grid-template-columns: 1fr; max-width: 15rem; }
-  .photos :global(.thumb) { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
+  /* Square, rounded crop window: picture.crop-thumb in global.css. */
+  .photos :global(.thumb) { object-fit: cover; }
   ol { list-style: none; padding: 0; margin: 0 0 2rem; }
   li { margin-bottom: 1.2rem; }
   li p { margin: 0; color: var(--muted); font-size: .82rem; text-align: justify; hyphens: auto; }
