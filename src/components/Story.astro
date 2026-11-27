@@ -5,7 +5,7 @@ const { story, couple } = invitation;
 ---
 <section id="story" class="section" aria-labelledby="story-heading">
   <div class:list={['photos', { single: story.photos.length === 1 }]} data-reveal>
-    {story.photos.map((photo) => <Photo photo={photo} widths={[320, 480]} sizes={story.photos.length === 1 ? '(min-width: 960px) 240px, 60vw' : '(min-width: 960px) 200px, 45vw'} class="thumb" />)}
+    {story.photos.map((photo) => <Photo photo={photo} widths={[320, 480]} sizes={story.photos.length === 1 ? '12rem' : '(min-width: 960px) 200px, 45vw'} class="thumb" />)}
   </div>
   <div data-reveal>
     <h2 id="story-heading" class="center">Journey of Love</h2>
@@ -16,13 +16,17 @@ const { story, couple } = invitation;
   </div>
 </section>
 <style>
-  .photos { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; max-width: 20rem; margin: 0 auto 2.5rem; }
-  .photos.single { grid-template-columns: 1fr; max-width: 15rem; }
+  .photos { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; max-width: 20rem; margin: 0 auto 2.25rem; }
+  .photos.single { grid-template-columns: 1fr; max-width: 12rem; }
   /* Square, rounded crop window: picture.crop-thumb in global.css. */
   .photos :global(.thumb) { object-fit: cover; }
-  ol { list-style: none; padding: 0; margin: 0 0 2rem; }
-  li { margin-bottom: 1.2rem; }
-  li p { margin: 0; color: var(--muted); font-size: .82rem; text-align: justify; hyphens: auto; }
-  li p + p { margin-top: .6rem; }
+  h2 { margin-bottom: 1.75rem; }
+  ol { list-style: none; padding: 0; margin: 0 0 2.5rem; }
+  li + li { margin-top: 1.9rem; }
+  h3 { margin-bottom: .45rem; }
+  /* Left-aligned: justified text leaves wide gaps between words in a narrow column, since
+     browsers cannot hyphenate Indonesian. */
+  li p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.75; }
+  li p + p { margin-top: .75rem; }
   .signature { font-family: var(--font-display); font-size: 1.3rem; margin: 0; }
 </style>
