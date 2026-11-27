@@ -106,7 +106,7 @@ test('group link: answers from different people add up, the same person updates 
   expect((await rpc('guest_party', { p_token_hash: personal.tokenHash })).body).toMatchObject({ group: false });
 });
 
-test('retried wishes are stored once and stay hidden until approved', async () => {
+test('retried wishes are stored once, shown right away and hidden when unapproved', async () => {
   const p = await party('wish');
   const key = randomUUID();
   const same = await Promise.all(Array.from({ length: 4 }, () =>
@@ -116,12 +116,15 @@ test('retried wishes are stored once and stay hidden until approved', async () =
   const stored = await call(`wishes?party_id=eq.${p.id}&select=id,approved`, undefined, SECRET, 'GET');
   expect(stored.body).toHaveLength(1);
 
-  const before = await rpc('public_wishes', { p_limit: 50 });
-  expect(before.body.some((w: { message: string }) => w.message === `Pesan ${run}`)).toBe(false);
-  await call(`wishes?id=eq.${stored.body[0].id}`, { approved: true }, SECRET, 'PATCH');
-  const after = await rpc('public_wishes', { p_limit: 50 });
-  const shown = after.body.find((w: { message: string }) => w.message === `Pesan ${run}`);
+  expect(stored.body[0].approved).toBe(true);
+  expect(same.every((r) => r.body.approved === true)).toBe(true);
+
+  const shownList = await rpc('public_wishes', { p_limit: 50 });
+  const shown = shownList.body.find((w: { message: string }) => w.message === `Pesan ${run}`);
   expect(Object.keys(shown).sort()).toEqual(['created_at', 'id', 'message', 'name']);
+  await call(`wishes?id=eq.${stored.body[0].id}`, { approved: false }, SECRET, 'PATCH');
+  const hidden = await rpc('public_wishes', { p_limit: 50 });
+  expect(hidden.body.some((w: { message: string }) => w.message === `Pesan ${run}`)).toBe(false);
 });
 
 test('check-in records the first arrival and reports repeats', async () => {
