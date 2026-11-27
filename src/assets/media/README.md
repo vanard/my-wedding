@@ -32,9 +32,10 @@ src/assets/media/
 │                                 img_4303 trimmed to 4:5 on a blurred background,
 │                                 made by `npm run media:preview`
 ├── img_4303.jpg                  Source of link-preview.jpg only (not in the gallery)
-└── album/                        Gallery: every image here is shown, shuffled on each
-                                  visit; near-identical shots are listed as "moments" in
-                                  src/content/invitation.ts and never shown touching
+└── album/                        Gallery: every image here is shown, in the order of
+                                  `albumOrder` in src/content/invitation.ts (unlisted ones
+                                  last). Portraits share a row; a landscape photo gets a
+                                  full-width row of its own
 ```
 
 `media-originals/` mirrors these names; `media-originals/RENAMES.txt` maps them back to

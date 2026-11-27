@@ -12,7 +12,7 @@ import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
 import linkPreview from '../assets/media/link-preview.jpg';
 
-// Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
+// Every photo in src/assets/media/album/ appears in the gallery.
 const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
 // Camera files (upper-case extensions, HEIC) are not picked up above; stop the build instead of
 // silently leaving them out of the gallery.
@@ -28,11 +28,40 @@ if (oversized.length) {
   throw new Error(`Unprocessed photos in src/assets/media/album/: ${oversized.map(([f]) => f.split('/').pop()).join(', ')}. `
     + 'Move them to media-originals/album/ and run `npm run media:photos -- media-originals/album/<file>` (see src/assets/media/README.md).');
 }
-// `file` (name without folder) is what `gallery.moments` refers to.
-const album: (Photo & { file: string })[] = Object.keys(albumFiles).sort().map((file, index) => ({
-  src: albumFiles[file]!,
+// Album order, top to bottom: move a line to move a photo. Photos in the folder that are not
+// listed here follow at the end in file-name order, so a newly added photo always shows up.
+// Portrait photos share a row (two per row on a phone); a landscape photo gets a row of its own.
+const albumOrder = [
+  'img_3994.jpg',
+  'img_3996.jpg',
+  'img_4056.jpg',
+  'img_4087.jpg',
+  'img_4102.jpg',
+  'img_4113.jpg',
+  'img_4114.jpg',
+  'img_4117.jpg',
+  'img_4127.jpg',
+  'img_4262.jpg',
+  'img_4284b.jpg',
+  'img_4286.jpg',
+  'img_4290.jpg',
+  'img_4293b.jpg',
+  'img_4294.jpg',
+  'img_4297.jpg',
+  'img_4298.jpg',
+  'img_4300.jpg',
+  'img_4301.jpg',
+  'photo-09.jpg',
+];
+const albumByName = new Map(Object.entries(albumFiles).map(([path, image]) => [path.split('/').pop()!, image]));
+const missing = albumOrder.filter((file) => !albumByName.has(file));
+if (missing.length) throw new Error(`albumOrder names photos that are not in src/assets/media/album/: ${missing.join(', ')}`);
+if (new Set(albumOrder).size !== albumOrder.length) throw new Error('albumOrder lists a photo twice.');
+const albumNames = [...albumOrder, ...[...albumByName.keys()].sort().filter((file) => !albumOrder.includes(file))];
+const album: (Photo & { file: string })[] = albumNames.map((file, index) => ({
+  src: albumByName.get(file)!,
   alt: `Foto Vian dan Ghea ${index + 1}`,
-  file: file.split('/').pop()!,
+  file,
 }));
 
 export interface Photo {
@@ -92,12 +121,8 @@ export interface InvitationContent {
   gallery: {
     quote: string;
     video: { youtubeId: string; poster: Photo; title: string } | null;
+    /** In display order (see `albumOrder`). */
     photos: (Photo & { file?: string })[];
-    /**
-     * Album photos from the same moment (near-identical shots), by file name. The gallery is
-     * shuffled on every visit, and photos in the same group are never placed next to each other.
-     */
-    moments: string[][];
   };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
@@ -158,15 +183,15 @@ export const invitation: InvitationContent = {
     photos: [
       { src: storyHands, alt: 'Siluet dua tangan saling menggenggam diterpa cahaya senja', position: '50% 35%' },
     ],
-    // The couple's own story (2026-11-14).
+    // The couple's own story (2026-11-14, revised 2026-11-27). A line break (\n) starts a new paragraph.
     chapters: [
       {
         title: 'Awal Bertemu',
-        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
+        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya?\nSalah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat pertemuan pertama ini, kami semakin mengenal satu sama lain.',
       },
       {
         title: 'Menjalin Hubungan',
-        text: 'Dari obrolan kecil dan sederhana itu, muncul rasa nyaman tiap kali berbagi cerita. Tak hanya itu, kami juga menyukai karakter satu sama lain. Perpaduan karakter itu bisa melengkapi bagian yang kurang dari kami. Akhirnya, kami memutuskan untuk menjalin hubungan.',
+        text: 'Sejak pertemuan pertama itu, kami merasa ada perasaan yang berbeda yang tidak pernah kami rasakan sebelumnya. Kami juga jatuh hati pada karakter satu sama lain, pada hal-hal istimewa yang kami temukan dalam diri masing-masing dan belum pernah kami temukan pada orang lain. Akhirnya, kami memutuskan untuk menjalin hubungan.',
       },
       {
         title: 'Lamaran',
@@ -174,7 +199,7 @@ export const invitation: InvitationContent = {
       },
       {
         title: 'Hari Pernikahan',
-        text: '20 Desember 2026, adalah hari yang kami pilih untuk melangsungkan pernikahan. Dengan izin Allah, niatan baik ini terlaksana dengan lancar. Sakinah mawaddah warahmah, adalah harapan kami dalam mengarungi kehidupan pernikahan kelak.',
+        text: '20 Desember 2026, adalah hari yang kami pilih untuk melangsungkan pernikahan. Dengan izin Allah, niatan baik ini terlaksana dengan lancar. Sakinah mawaddah warahmah, adalah harapan kami dalam mengarungi kehidupan pernikahan ini.',
       },
     ],
   },
@@ -212,14 +237,6 @@ export const invitation: InvitationContent = {
     // https://www.youtube.com/watch?v=gpVMepCXalA
     video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
-    moments: [
-      ['img_3994.jpg', 'img_3996.jpg', 'img_4286.jpg'], // standing among the trees
-      ['img_4056.jpg', 'img_4284b.jpg', 'photo-09.jpg'], // garden: lying on the grass, bench, veil
-      ['img_4293b.jpg', 'img_4297.jpg', 'img_4298.jpg'], // veil
-      ['img_4102.jpg', 'img_4262.jpg', 'img_4300.jpg'], // beach walk
-      ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
-      ['img_4087.jpg', 'img_4113.jpg', 'img_4117.jpg'], // engagement: at the flower wall
-    ],
   },
   closingQuote: {
     text: 'Di antara banyak hal yang kami syukuri, salah satunya adalah bisa menyebut satu sama lain sebagai rumah.',
@@ -238,8 +255,9 @@ export const invitation: InvitationContent = {
         value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
       },
     ],
-    // The groom's other accounts, behind the "Lihat rekening lainnya" button (shown since 2026-11-27).
-    showMore: true,
+    // Hidden at the couple's request (2026-11-14, again 2026-11-27): no "Lihat rekening lainnya"
+    // button, and these numbers are not in the page. Set true to show them behind the button.
+    showMore: false,
     more: [
       { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
       { kind: 'bank', provider: 'Seabank', holder: 'Vian Rasyid', value: '901279716707' },

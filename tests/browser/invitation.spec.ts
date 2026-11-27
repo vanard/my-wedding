@@ -99,7 +99,7 @@ test('requests music from the opening gesture and reports rejected playback', as
   await page.waitForTimeout(1000);
   expect(audioRequests).toEqual([]);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
-  await expect(page.locator('[data-music-status]')).toHaveText('Ketuk tombol untuk memutar musik.');
+  await expect(page.locator('[data-music-status]')).toHaveText('Ketuk layar untuk memutar musik.');
   await expect(page.locator('main')).toBeVisible();
 });
 
@@ -135,6 +135,62 @@ test('music pauses while the guest is away and resumes on return, unless they pa
   expect(await paused()).toBe(true);
   await setHidden(true);
   await setHidden(false);
+  expect(await paused()).toBe(true);
+});
+
+test('music comes back after the video clip, even when the phone paused it first', async ({ page }) => {
+  // Stand-in audio (as above) and a stand-in YouTube player on the real player origin, which
+  // reports its state the way the IFrame API does.
+  await page.addInitScript(() => {
+    const state = new WeakMap<HTMLMediaElement, boolean>();
+    const w = window as unknown as { rejectNextPlay: boolean };
+    w.rejectNextPlay = false;
+    Object.defineProperty(HTMLMediaElement.prototype, 'paused', { get() { return state.get(this) ?? true; } });
+    HTMLMediaElement.prototype.play = function () {
+      if (w.rejectNextPlay) { w.rejectNextPlay = false; return Promise.reject(new DOMException('Blocked in test', 'NotAllowedError')); }
+      state.set(this, false); this.dispatchEvent(new Event('play')); return Promise.resolve();
+    };
+    HTMLMediaElement.prototype.pause = function () { state.set(this, true); this.dispatchEvent(new Event('pause')); };
+  });
+  await page.route(/youtube-nocookie\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>player</p>' }));
+  const paused = () => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.paused);
+  const status = page.locator('[data-music-status]');
+  await page.goto('/?to=Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  expect(await paused()).toBe(false);
+
+  await page.locator('[data-video-clip]').scrollIntoViewIfNeeded();
+  await page.locator('[data-video-clip]').click();
+  expect(await paused()).toBe(true);
+  const frame = page.frameLocator('#gallery iframe').locator('body');
+  const report = (state: number) => frame.evaluate((_, info) => parent.postMessage(JSON.stringify({ event: 'onStateChange', info }), '*'), state);
+  await report(1);
+  await report(2); // guest paused the clip
+  await expect.poll(paused).toBe(false);
+
+  // Played again from inside the player: the phone pauses the music before YouTube reports.
+  await page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.pause());
+  await report(1);
+  await report(0); // clip ended
+  await expect.poll(paused).toBe(false);
+
+  // The browser refuses the automatic resume: the next tap anywhere continues the music.
+  await report(1);
+  await page.evaluate(() => { (window as unknown as { rejectNextPlay: boolean }).rejectNextPlay = true; });
+  await report(2);
+  await expect(status).toHaveText('Ketuk layar untuk memutar musik.');
+  expect(await paused()).toBe(true);
+  await page.locator('#gallery-heading').click();
+  await expect.poll(paused).toBe(false);
+  await expect(status).toHaveText('');
+
+  // Turned off by the guest: the clip no longer brings it back.
+  await page.locator('#wishes').scrollIntoViewIfNeeded();
+  await page.locator('[data-music-toggle]').click();
+  expect(await paused()).toBe(true);
+  await report(1);
+  await report(2);
+  await page.waitForTimeout(300);
   expect(await paused()).toBe(true);
 });
 
@@ -248,24 +304,30 @@ test('floating buttons step aside while the video clip is on screen', async ({ p
   await expect(side).toBeVisible();
 });
 
-test('album is shuffled so photos from the same moment never touch, and the viewer follows the order', async ({ page }) => {
+test('album keeps its order in justified rows, and the viewer follows the order', async ({ page }) => {
+  const order = async () => page.locator('[data-gallery-item]').evaluateAll((links) => links.map((a) => (a as HTMLAnchorElement).href));
   await page.goto('/?to=Budi');
+  const first = await order();
+  await page.reload();
+  expect(await order()).toEqual(first); // no shuffle
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.locator('#gallery').scrollIntoViewIfNeeded();
-  const touching = await page.evaluate(() => {
-    const tiles = [...document.querySelectorAll<HTMLElement>('[data-gallery] li')].map((li) => ({ moment: li.dataset.moment, box: li.getBoundingClientRect() }));
-    let count = 0;
-    for (let i = 0; i < tiles.length; i++) for (let j = i + 1; j < tiles.length; j++) {
-      const a = tiles[i]!, b = tiles[j]!;
-      if (a.moment === undefined || a.moment !== b.moment) continue;
-      const sameColumn = Math.abs(a.box.left - b.box.left) < 5;
-      const gap = Math.max(a.box.top, b.box.top) - Math.min(a.box.bottom, b.box.bottom);
-      const overlap = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
-      if (sameColumn ? gap < 20 : overlap > 0.2 * Math.min(a.box.height, b.box.height)) count++;
+  // Every row is one height and fills the grid's width (the last row may be shorter).
+  const rows = await page.locator('[data-gallery]').evaluate((grid) => {
+    const width = grid.getBoundingClientRect().width;
+    const byTop = new Map<number, DOMRect[]>();
+    for (const li of grid.querySelectorAll('li:not(.break):not(.spare)')) {
+      const box = li.getBoundingClientRect();
+      byTop.set(Math.round(box.top), [...(byTop.get(Math.round(box.top)) ?? []), box]);
     }
-    return count;
+    return [...byTop.values()].map((boxes) => ({
+      heights: boxes.map((b) => Math.round(b.height)),
+      span: Math.round(boxes.at(-1)!.right - boxes[0]!.left) / width,
+    }));
   });
-  expect(touching).toBe(0);
+  expect(rows.length).toBeGreaterThan(1);
+  for (const row of rows) expect(Math.max(...row.heights) - Math.min(...row.heights)).toBeLessThanOrEqual(1);
+  for (const row of rows.slice(0, -1)) expect(row.span).toBeGreaterThan(0.99);
   const third = page.locator('[data-gallery-item]').nth(2);
   const href = await third.getAttribute('href');
   // Photos do not enlarge on hover.
@@ -286,7 +348,7 @@ test('album is shuffled so photos from the same moment never touch, and the view
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
-test('Superbank and BCA are shown; the other accounts open in a pop-up', async ({ page }) => {
+test('Superbank and BCA are shown; the other accounts and their button are not', async ({ page }) => {
   await page.goto(`/?to=Budi&k=${CODE}`);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
@@ -294,23 +356,21 @@ test('Superbank and BCA are shown; the other accounts open in a pop-up', async (
   await gift.scrollIntoViewIfNeeded();
   await expect(gift.getByText('000001628502')).toBeVisible();
   await expect(gift.getByText('0700237524')).toBeVisible();
-  await expect(gift.getByText('1310015634357')).toBeHidden();
-  await page.getByRole('button', { name: 'Lihat rekening lainnya' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Rekening & Dompet Digital' });
-  for (const value of ['1310015634357', '901279716707', '082237058889']) await expect(dialog.getByText(value)).toBeVisible();
-  await expect(dialog.getByText('0700237524')).toHaveCount(0);
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
+  // Not just hidden: the other account numbers are not in the page at all.
+  const html = await page.content();
+  for (const value of ['1310015634357', '901279716707', '082237058889']) expect(html).not.toContain(value);
 });
 
 // Without JavaScript the personal-code check cannot run, so the gift section stays readable.
-test('without JavaScript every gift account is listed and the pop-up button is hidden', async ({ browser }) => {
+test('without JavaScript only Superbank and BCA are listed too', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4322/');
   const gift = page.locator('#gift');
-  for (const value of ['000001628502', '0700237524', '1310015634357', '901279716707', '082237058889']) await expect(gift.getByText(value)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeHidden();
+  await expect(gift.getByText('000001628502')).toBeVisible();
+  await expect(gift.getByText('0700237524')).toBeVisible();
+  await expect(gift.getByText('1310015634357')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
   await context.close();
 });
