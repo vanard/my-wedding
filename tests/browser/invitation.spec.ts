@@ -348,28 +348,27 @@ test('album keeps its order in justified rows, and the viewer follows the order'
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
-test('Superbank and BCA are shown; the other accounts and their button are not', async ({ page }) => {
+test('only Superbank is shown; the other accounts and their button are not', async ({ page }) => {
   await page.goto(`/?to=Budi&k=${CODE}`);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
   const gift = page.locator('#gift');
   await gift.scrollIntoViewIfNeeded();
   await expect(gift.getByText('000001628502')).toBeVisible();
-  await expect(gift.getByText('0700237524')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
   // Not just hidden: the other account numbers are not in the page at all.
   const html = await page.content();
-  for (const value of ['1310015634357', '901279716707', '082237058889']) expect(html).not.toContain(value);
+  for (const value of ['1310015634357', '0700237524', '901279716707', '082237058889']) expect(html).not.toContain(value);
 });
 
 // Without JavaScript the personal-code check cannot run, so the gift section stays readable.
-test('without JavaScript only Superbank and BCA are listed too', async ({ browser }) => {
+test('without JavaScript only Superbank is listed too', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4322/');
   const gift = page.locator('#gift');
   await expect(gift.getByText('000001628502')).toBeVisible();
-  await expect(gift.getByText('0700237524')).toBeVisible();
+  await expect(gift.getByText('0700237524')).toHaveCount(0);
   await expect(gift.getByText('1310015634357')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
   await context.close();
