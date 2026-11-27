@@ -134,7 +134,7 @@ export const invitation: InvitationContent = {
     source: 'QS. Ar-Rum Ayat 21',
   },
   // Sunday 20 December 2026, Mataram (WITA, UTC+8).
-  startsAt: '2026-12-20T08:30:00+08:00',
+  startsAt: '2026-12-20T08:00:00+08:00',
   timeZone: 'Asia/Makassar',
   people: [
     {
@@ -183,9 +183,9 @@ export const invitation: InvitationContent = {
     {
       eyebrow: 'Prosesi',
       title: 'Akad Nikah',
-      startsAt: '2026-12-20T08:30:00+08:00',
-      endsAt: '2026-12-20T09:30:00+08:00',
-      venue: 'Asrama Haji Mataram, Bir Ali 2',
+      startsAt: '2026-12-20T08:00:00+08:00',
+      endsAt: '2026-12-20T09:00:00+08:00',
+      venue: 'Bir Ali 2, Asrama Haji',
       // Street address not supplied yet; add it here when available.
       address: 'Mataram, Nusa Tenggara Barat',
       // Search link; replace with the exact Google Maps share link (pin) when available.
@@ -195,8 +195,8 @@ export const invitation: InvitationContent = {
       eyebrow: 'Perayaan',
       title: 'Resepsi',
       startsAt: '2026-12-20T10:30:00+08:00',
-      endsAt: '2026-12-20T12:30:00+08:00',
-      venue: 'Asrama Haji Mataram, Bir Ali 2',
+      endsAt: '2026-12-20T13:00:00+08:00',
+      venue: 'Bir Ali 2, Asrama Haji',
       // Street address not supplied yet; add it here when available.
       address: 'Mataram, Nusa Tenggara Barat',
       // Search link; replace with the exact Google Maps share link (pin) when available.
