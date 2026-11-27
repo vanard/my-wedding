@@ -247,7 +247,6 @@ export const invitation: InvitationContent = {
     text: 'Doa restu Anda adalah hadiah terindah bagi kami. Namun jika Anda ingin memberikan tanda kasih, Anda dapat mengirimkannya melalui:',
     accounts: [
       { kind: 'bank', provider: 'Superbank', holder: 'Ghea Citra Melani', value: '000001628502' },
-      { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },
       {
         kind: 'address',
         provider: 'Kirim kado',
@@ -255,11 +254,13 @@ export const invitation: InvitationContent = {
         value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
       },
     ],
-    // Hidden at the couple's request (2026-11-14, again 2026-11-27): no "Lihat rekening lainnya"
-    // button, and these numbers are not in the page. Set true to show them behind the button.
+    // Hidden at the couple's request (2026-11-14; again on 2026-11-27, BCA included): no
+    // "Lihat rekening lainnya" button, and these numbers are not in the page. Set true to show
+    // them behind the button.
     showMore: false,
     more: [
       { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
+      { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },
       { kind: 'bank', provider: 'Seabank', holder: 'Vian Rasyid', value: '901279716707' },
       // In the groom's name. Which e-wallet app(s) this number is for was not specified.
       { kind: 'wallet', provider: 'Dompet digital', holder: 'Vian Rasyid', value: '082237058889' },
