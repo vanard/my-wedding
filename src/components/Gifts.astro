@@ -10,7 +10,7 @@ const { gifts } = invitation;
 const more = gifts?.showMore ? gifts.more : [];
 ---
 {gifts && (
-  <section id="gift" class="section gift" aria-labelledby="gift-heading">
+  <section id="gift" class="section gift" aria-labelledby="gift-heading" data-personal>
     <div class="center" data-reveal>
       <h2 id="gift-heading">Wedding Gift</h2>
       <p class="muted small">{gifts.text}</p>

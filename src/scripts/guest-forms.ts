@@ -4,7 +4,8 @@
 // - Group link (also ?k=, marked as a group in the database): each person adds their own name
 //   and head count. This browser keeps a random respondent key, so it updates its own answer
 //   and retries never add a second one; other people's answers add up instead of replacing it.
-// - Without a code: forms stay disabled with a note; approved wishes are still listed.
+// - Without a code: the RSVP section is hidden (invitation.ts), the wish form stays disabled
+//   with a note, and approved wishes are still listed.
 import { guestCode } from './guest-code';
 import type { Party, PublicWish as Wish, Rsvp, WishesPage } from '../lib/contracts';
 
