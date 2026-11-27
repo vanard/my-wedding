@@ -134,7 +134,7 @@ export const invitation: InvitationContent = {
     source: 'QS. Ar-Rum Ayat 21',
   },
   // Sunday 20 December 2026, Mataram (WITA, UTC+8).
-  startsAt: '2026-12-20T08:30:00+08:00',
+  startsAt: '2026-12-20T08:00:00+08:00',
   timeZone: 'Asia/Makassar',
   people: [
     {
@@ -183,9 +183,9 @@ export const invitation: InvitationContent = {
     {
       eyebrow: 'Prosesi',
       title: 'Akad Nikah',
-      startsAt: '2026-12-20T08:30:00+08:00',
-      endsAt: '2026-12-20T09:30:00+08:00',
-      venue: 'Asrama Haji Mataram, Bir Ali 2',
+      startsAt: '2026-12-20T08:00:00+08:00',
+      endsAt: '2026-12-20T09:00:00+08:00',
+      venue: 'Bir Ali 2, Asrama Haji',
       // Street address not supplied yet; add it here when available.
       address: 'Mataram, Nusa Tenggara Barat',
       // Search link; replace with the exact Google Maps share link (pin) when available.
@@ -195,8 +195,8 @@ export const invitation: InvitationContent = {
       eyebrow: 'Perayaan',
       title: 'Resepsi',
       startsAt: '2026-12-20T10:30:00+08:00',
-      endsAt: '2026-12-20T12:30:00+08:00',
-      venue: 'Asrama Haji Mataram, Bir Ali 2',
+      endsAt: '2026-12-20T13:00:00+08:00',
+      venue: 'Bir Ali 2, Asrama Haji',
       // Street address not supplied yet; add it here when available.
       address: 'Mataram, Nusa Tenggara Barat',
       // Search link; replace with the exact Google Maps share link (pin) when available.
@@ -213,10 +213,10 @@ export const invitation: InvitationContent = {
     video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
     moments: [
-      ['img_4286.jpg', 'img_4287b.jpg'], // standing among the trees
-      ['img_4284b.jpg', 'img_4305.jpg', 'photo-09.jpg'], // garden: bench, lying on the grass, veil
+      ['img_3994.jpg', 'img_3996.jpg', 'img_4286.jpg'], // standing among the trees
+      ['img_4056.jpg', 'img_4284b.jpg', 'photo-09.jpg'], // garden: lying on the grass, bench, veil
       ['img_4293b.jpg', 'img_4297.jpg', 'img_4298.jpg'], // veil
-      ['img_4299.jpg', 'img_4300.jpg', 'photo-08.jpg'], // beach walk
+      ['img_4102.jpg', 'img_4262.jpg', 'img_4300.jpg'], // beach walk
       ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
       ['img_4087.jpg', 'img_4113.jpg', 'img_4117.jpg'], // engagement: at the flower wall
     ],
@@ -230,6 +230,7 @@ export const invitation: InvitationContent = {
     text: 'Doa restu Anda adalah hadiah terindah bagi kami. Namun jika Anda ingin memberikan tanda kasih, Anda dapat mengirimkannya melalui:',
     accounts: [
       { kind: 'bank', provider: 'Superbank', holder: 'Ghea Citra Melani', value: '000001628502' },
+      { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },
       {
         kind: 'address',
         provider: 'Kirim kado',
@@ -237,11 +238,10 @@ export const invitation: InvitationContent = {
         value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
       },
     ],
-    // Hidden for now at the couple's request (2026-11-14); set true to show the button again.
-    showMore: false,
+    // The groom's other accounts, behind the "Lihat rekening lainnya" button (shown since 2026-11-27).
+    showMore: true,
     more: [
       { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
-      { kind: 'bank', provider: 'BCA', holder: 'Vian Rasyid', value: '0700237524' },
       { kind: 'bank', provider: 'Seabank', holder: 'Vian Rasyid', value: '901279716707' },
       // In the groom's name. Which e-wallet app(s) this number is for was not specified.
       { kind: 'wallet', provider: 'Dompet digital', holder: 'Vian Rasyid', value: '082237058889' },

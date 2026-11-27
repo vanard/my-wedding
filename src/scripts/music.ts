@@ -24,7 +24,10 @@ export function initMusic() {
   audio.addEventListener('play', update);
   audio.addEventListener('pause', update);
   audio.addEventListener('error', () => { status.textContent = 'Musik tidak dapat dimuat. Coba lagi nanti.'; update(); });
-  button.addEventListener('click', () => { if (audio.paused) play(); else audio.pause(); });
+  // True while the video clip has paused music that was playing; the music continues when the
+  // clip is paused or ends. A tap on the music button overrides this either way.
+  let resumeAfterMedia = false;
+  button.addEventListener('click', () => { resumeAfterMedia = false; if (audio.paused) play(); else audio.pause(); });
   // Leaving the page (another tab or app, screen off) pauses the music; coming back resumes it,
   // but only if it was playing when the guest left (not after they paused it themselves).
   // The first play came from the opening tap, so browsers allow this resume; if one refuses,
@@ -40,6 +43,19 @@ export function initMusic() {
     }
   });
   // Another sound source (the video clip) started: pause the music rather than play over it.
-  document.addEventListener('invitation:media-play', () => { resumeWhenVisible = false; audio.pause(); });
+  document.addEventListener('invitation:media-play', () => {
+    if (!audio.paused) resumeAfterMedia = true;
+    resumeWhenVisible = false;
+    audio.pause();
+  });
+  // The clip was paused or finished: continue the music if the clip is what paused it.
+  // This play() is not inside a tap, but the audio was already started by one, so browsers
+  // allow it; if one refuses, the status asks for a tap.
+  document.addEventListener('invitation:media-stop', () => {
+    if (!resumeAfterMedia) return;
+    resumeAfterMedia = false;
+    if (document.hidden) resumeWhenVisible = true;
+    else play();
+  });
   return { open(playMusic: boolean) { player.hidden = false; if (playMusic) play(); } };
 }
