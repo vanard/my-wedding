@@ -158,15 +158,15 @@ export const invitation: InvitationContent = {
     photos: [
       { src: storyHands, alt: 'Siluet dua tangan saling menggenggam diterpa cahaya senja', position: '50% 35%' },
     ],
-    // The couple's own story (2026-11-14).
+    // The couple's own story (2026-11-14, revised 2026-11-27). A line break (\n) starts a new paragraph.
     chapters: [
       {
         title: 'Awal Bertemu',
-        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
+        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya?\nSalah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat pertemuan pertama ini, kami semakin mengenal satu sama lain.',
       },
       {
         title: 'Menjalin Hubungan',
-        text: 'Dari obrolan kecil dan sederhana itu, muncul rasa nyaman tiap kali berbagi cerita. Tak hanya itu, kami juga menyukai karakter satu sama lain. Perpaduan karakter itu bisa melengkapi bagian yang kurang dari kami. Akhirnya, kami memutuskan untuk menjalin hubungan.',
+        text: 'Sejak pertemuan pertama itu, kami merasa ada perasaan yang berbeda yang tidak pernah kami rasakan sebelumnya. Kami juga jatuh hati pada karakter satu sama lain, pada hal-hal istimewa yang kami temukan dalam diri masing-masing dan belum pernah kami temukan pada orang lain. Akhirnya, kami memutuskan untuk menjalin hubungan.',
       },
       {
         title: 'Lamaran',
@@ -174,7 +174,7 @@ export const invitation: InvitationContent = {
       },
       {
         title: 'Hari Pernikahan',
-        text: '20 Desember 2026, adalah hari yang kami pilih untuk melangsungkan pernikahan. Dengan izin Allah, niatan baik ini terlaksana dengan lancar. Sakinah mawaddah warahmah, adalah harapan kami dalam mengarungi kehidupan pernikahan kelak.',
+        text: '20 Desember 2026, adalah hari yang kami pilih untuk melangsungkan pernikahan. Dengan izin Allah, niatan baik ini terlaksana dengan lancar. Sakinah mawaddah warahmah, adalah harapan kami dalam mengarungi kehidupan pernikahan ini.',
       },
     ],
   },

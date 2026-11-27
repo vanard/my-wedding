@@ -10,7 +10,7 @@ const { story, couple } = invitation;
   <div data-reveal>
     <h2 id="story-heading" class="center">Journey of Love</h2>
     <ol>
-      {story.chapters.map((chapter) => <li><h3>{chapter.title}</h3><p>{chapter.text}</p></li>)}
+      {story.chapters.map((chapter) => <li><h3>{chapter.title}</h3>{chapter.text.split(/\n+/).map((paragraph) => <p>{paragraph.trim()}</p>)}</li>)}
     </ol>
     <p class="rule signature">{couple.first} &amp; {couple.second}</p>
   </div>
@@ -23,5 +23,6 @@ const { story, couple } = invitation;
   ol { list-style: none; padding: 0; margin: 0 0 2rem; }
   li { margin-bottom: 1.2rem; }
   li p { margin: 0; color: var(--muted); font-size: .82rem; text-align: justify; hyphens: auto; }
+  li p + p { margin-top: .6rem; }
   .signature { font-family: var(--font-display); font-size: 1.3rem; margin: 0; }
 </style>
