@@ -286,7 +286,7 @@ test('album is shuffled so photos from the same moment never touch, and the view
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
-test('Superbank and BCA are shown; the other accounts open in a pop-up', async ({ page }) => {
+test('Superbank and BCA are shown; the other accounts and their button are not', async ({ page }) => {
   await page.goto(`/?to=Budi&k=${CODE}`);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
@@ -294,23 +294,21 @@ test('Superbank and BCA are shown; the other accounts open in a pop-up', async (
   await gift.scrollIntoViewIfNeeded();
   await expect(gift.getByText('000001628502')).toBeVisible();
   await expect(gift.getByText('0700237524')).toBeVisible();
-  await expect(gift.getByText('1310015634357')).toBeHidden();
-  await page.getByRole('button', { name: 'Lihat rekening lainnya' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Rekening & Dompet Digital' });
-  for (const value of ['1310015634357', '901279716707', '082237058889']) await expect(dialog.getByText(value)).toBeVisible();
-  await expect(dialog.getByText('0700237524')).toHaveCount(0);
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
+  // Not just hidden: the other account numbers are not in the page at all.
+  const html = await page.content();
+  for (const value of ['1310015634357', '901279716707', '082237058889']) expect(html).not.toContain(value);
 });
 
 // Without JavaScript the personal-code check cannot run, so the gift section stays readable.
-test('without JavaScript every gift account is listed and the pop-up button is hidden', async ({ browser }) => {
+test('without JavaScript only Superbank and BCA are listed too', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4322/');
   const gift = page.locator('#gift');
-  for (const value of ['000001628502', '0700237524', '1310015634357', '901279716707', '082237058889']) await expect(gift.getByText(value)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeHidden();
+  await expect(gift.getByText('000001628502')).toBeVisible();
+  await expect(gift.getByText('0700237524')).toBeVisible();
+  await expect(gift.getByText('1310015634357')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
   await context.close();
 });

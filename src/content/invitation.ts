@@ -238,8 +238,9 @@ export const invitation: InvitationContent = {
         value: 'Jl. Asri Blok M No. 8, Perum Elit Kota Mataram Asri, Lingkar Selatan, Kota Mataram, Sekarbela, Nusa Tenggara Barat (NTB), Indonesia 83116',
       },
     ],
-    // The groom's other accounts, behind the "Lihat rekening lainnya" button (shown since 2026-11-27).
-    showMore: true,
+    // Hidden at the couple's request (2026-11-14, again 2026-11-27): no "Lihat rekening lainnya"
+    // button, and these numbers are not in the page. Set true to show them behind the button.
+    showMore: false,
     more: [
       { kind: 'bank', provider: 'Mandiri', holder: 'Vian Rasyid', value: '1310015634357' },
       { kind: 'bank', provider: 'Seabank', holder: 'Vian Rasyid', value: '901279716707' },
