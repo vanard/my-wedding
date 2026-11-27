@@ -148,8 +148,9 @@ export const invitation: InvitationContent = {
   couple: { first: 'Vian', second: 'Ghea' },
   hashtag: '#GHEArtofVIAN',
   greeting: 'Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.',
+  // A line break (\n) in the quote starts a new line.
   quote: {
-    text: 'Beberapa pertemuan memilih caranya sendiri, salah satunya lewat mimpi.',
+    text: 'Beberapa pertemuan memilih caranya sendiri\nsalah satunya lewat mimpi.',
     source: '',
   },
   // Provided by the couple (2026-11-14), text exactly as supplied.
