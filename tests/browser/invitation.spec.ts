@@ -99,7 +99,7 @@ test('requests music from the opening gesture and reports rejected playback', as
   await page.waitForTimeout(1000);
   expect(audioRequests).toEqual([]);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
-  await expect(page.locator('[data-music-status]')).toHaveText('Ketuk tombol untuk memutar musik.');
+  await expect(page.locator('[data-music-status]')).toHaveText('Ketuk layar untuk memutar musik.');
   await expect(page.locator('main')).toBeVisible();
 });
 
@@ -135,6 +135,62 @@ test('music pauses while the guest is away and resumes on return, unless they pa
   expect(await paused()).toBe(true);
   await setHidden(true);
   await setHidden(false);
+  expect(await paused()).toBe(true);
+});
+
+test('music comes back after the video clip, even when the phone paused it first', async ({ page }) => {
+  // Stand-in audio (as above) and a stand-in YouTube player on the real player origin, which
+  // reports its state the way the IFrame API does.
+  await page.addInitScript(() => {
+    const state = new WeakMap<HTMLMediaElement, boolean>();
+    const w = window as unknown as { rejectNextPlay: boolean };
+    w.rejectNextPlay = false;
+    Object.defineProperty(HTMLMediaElement.prototype, 'paused', { get() { return state.get(this) ?? true; } });
+    HTMLMediaElement.prototype.play = function () {
+      if (w.rejectNextPlay) { w.rejectNextPlay = false; return Promise.reject(new DOMException('Blocked in test', 'NotAllowedError')); }
+      state.set(this, false); this.dispatchEvent(new Event('play')); return Promise.resolve();
+    };
+    HTMLMediaElement.prototype.pause = function () { state.set(this, true); this.dispatchEvent(new Event('pause')); };
+  });
+  await page.route(/youtube-nocookie\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>player</p>' }));
+  const paused = () => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.paused);
+  const status = page.locator('[data-music-status]');
+  await page.goto('/?to=Budi');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  expect(await paused()).toBe(false);
+
+  await page.locator('[data-video-clip]').scrollIntoViewIfNeeded();
+  await page.locator('[data-video-clip]').click();
+  expect(await paused()).toBe(true);
+  const frame = page.frameLocator('#gallery iframe').locator('body');
+  const report = (state: number) => frame.evaluate((_, info) => parent.postMessage(JSON.stringify({ event: 'onStateChange', info }), '*'), state);
+  await report(1);
+  await report(2); // guest paused the clip
+  await expect.poll(paused).toBe(false);
+
+  // Played again from inside the player: the phone pauses the music before YouTube reports.
+  await page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.pause());
+  await report(1);
+  await report(0); // clip ended
+  await expect.poll(paused).toBe(false);
+
+  // The browser refuses the automatic resume: the next tap anywhere continues the music.
+  await report(1);
+  await page.evaluate(() => { (window as unknown as { rejectNextPlay: boolean }).rejectNextPlay = true; });
+  await report(2);
+  await expect(status).toHaveText('Ketuk layar untuk memutar musik.');
+  expect(await paused()).toBe(true);
+  await page.locator('#gallery-heading').click();
+  await expect.poll(paused).toBe(false);
+  await expect(status).toHaveText('');
+
+  // Turned off by the guest: the clip no longer brings it back.
+  await page.locator('#wishes').scrollIntoViewIfNeeded();
+  await page.locator('[data-music-toggle]').click();
+  expect(await paused()).toBe(true);
+  await report(1);
+  await report(2);
+  await page.waitForTimeout(300);
   expect(await paused()).toBe(true);
 });
 
