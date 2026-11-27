@@ -162,7 +162,7 @@ export const invitation: InvitationContent = {
     chapters: [
       {
         title: 'Awal Bertemu',
-        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
+        text: 'Mungkin bagi sebagian orang, mimpi hanya bunga tidur. Tapi, bagaimana jika mimpi itu berlanjut di kehidupan nyata tanpa pernah direncanakan sebelumnya? Salah satu cafe di kota Mataram menjadi saksi pertemuan kami di pertengahan tahun 2023. Lewat obrolan kecil dan sederhana, kami semakin mengenal satu sama lain.',
       },
       {
         title: 'Menjalin Hubungan',
