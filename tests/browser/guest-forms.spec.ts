@@ -113,7 +113,7 @@ test('group link: each person answers with their own name; this phone keeps its 
   expect(keys[1]).toBe(keys[0]);
 });
 
-test('wishes: listed as plain text with paging; a retried wish reuses its key', async ({ page }) => {
+test('wishes: listed as plain text with paging; a retried wish reuses its key and shows at once', async ({ page }) => {
   await page.route('**/api/guest', (route) => route.fulfill(json({ party: { name: 'Rina', maxGuests: 1, rsvp: null } })));
   await page.route('**/api/wishes?*', (route) => {
     const before = new URL(route.request().url()).searchParams.get('before');
@@ -124,7 +124,7 @@ test('wishes: listed as plain text with paging; a retried wish reuses its key', 
   const keys: string[] = [];
   await page.route('**/api/wishes', (route) => {
     keys.push(route.request().postDataJSON().idempotencyKey);
-    return keys.length === 1 ? route.abort('internetdisconnected') : route.fulfill(json({ wish: { approved: false } }, 201));
+    return keys.length === 1 ? route.abort('internetdisconnected') : route.fulfill(json({ wish: { approved: true } }, 201));
   });
 
   await openInvitation(page, `?to=Rina&k=${CODE}`);
@@ -142,8 +142,10 @@ test('wishes: listed as plain text with paging; a retried wish reuses its key', 
   await expect(page.locator('[data-wishes-status]')).toContainText('Koneksi terputus');
   await expect(page.locator('#wish-message')).toHaveValue('Selamat menempuh hidup baru');
   await page.getByRole('button', { name: 'Kirim ucapan' }).click();
-  await expect(page.locator('[data-wishes-status]')).toContainText('setelah ditinjau');
+  await expect(page.locator('[data-wishes-status]')).toHaveText('Terima kasih atas ucapan dan doanya!');
   await expect(page.locator('#wish-message')).toHaveValue('');
+  await expect(list.locator('.wish')).toHaveCount(3);
+  await expect(list.locator('.wish-message').first()).toHaveText('Selamat menempuh hidup baru');
   expect(keys).toHaveLength(2);
   expect(keys[1]).toBe(keys[0]);
 });

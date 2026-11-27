@@ -72,7 +72,8 @@ constraints and indexes, not only application checks.
 - Enable Row Level Security for exposed tables and grant only required access.
   Keep Supabase secret/service-role keys in server-only environment variables;
   these keys bypass RLS, so server endpoints must also enforce authorization.
-- Publish only approved wishes. Paginate them, initially 20 per request with a
+- Publish only approved wishes. Wishes from a valid link are approved automatically (the
+  couple's choice); the owner hides one by setting `approved` to false. Paginate them, initially 20 per request with a
   hard maximum of 50, and cache public responses where appropriate. Do not load
   the entire guestbook, poll continuously, or enable realtime subscriptions by
   default. Never publicly cache personalized or private responses.

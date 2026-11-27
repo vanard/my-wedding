@@ -218,6 +218,11 @@ function initWishForm(form: HTMLFormElement, auth: Record<string, string> | null
         headers: { ...auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.value, message: message.value, idempotencyKey: key }),
       });
+      // Shown right away (approved): add it to the list here, since the public list is cached.
+      if (wish.approved) {
+        const added: Wish = { name: name.value.trim(), message: message.value.trim(), createdAt: new Date().toISOString() };
+        document.dispatchEvent(new CustomEvent<Wish>('invitation:wish-added', { detail: added }));
+      }
       message.value = '';
       key = uuid();
       status.textContent = wish.approved
@@ -256,6 +261,17 @@ function initWishList(section: HTMLElement) {
     return item;
   };
 
+  // Wishes this guest just sent, shown at the top before the cached list catches up.
+  // A later page from the server skips them, so they don't appear twice.
+  const sent = new Set<string>();
+  const id = (wish: Wish) => `${wish.name}\n${wish.message}`;
+  document.addEventListener('invitation:wish-added', (event) => {
+    const wish = (event as CustomEvent<Wish>).detail;
+    sent.add(id(wish));
+    empty.hidden = true;
+    list.prepend(render(wish));
+  });
+
   let next: string | null = null;
   let loading = false;
   const load = async () => {
@@ -268,7 +284,7 @@ function initWishList(section: HTMLElement) {
       if (next) params.set('before', next);
       const page = await request<WishesPage>(`/api/wishes?${params}`);
       if (page.wishes.length) empty.hidden = true;
-      list.append(...page.wishes.map(render));
+      list.append(...page.wishes.filter((wish) => !sent.has(id(wish))).map(render));
       next = page.next;
       more.hidden = !next;
       status.textContent = '';

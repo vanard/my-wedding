@@ -96,8 +96,9 @@ How it works:
   later; retries never count twice. Answering again from another phone counts as a new person.
   A group accepts at most 300 answers, 200 wishes, and 60 RSVPs / 20 wishes per 10 minutes.
   Its QR works for everyone in the group: staff see the group's totals, never "sudah check-in".
-- **Wishes**: sent from a personal link; shown on the site only after you approve them.
-  The approved list is public (name, message, date) and cached for about a minute.
+- **Wishes**: sent from a personal or group link and shown on the site right away (no
+  review). The sender sees theirs at once; others within about a minute, since the public
+  list (name, message, date) is cached.
 - **Entry Access Card**: its QR opens `/checkin/#<code>`. Staff phones signed in with
   `CHECKIN_KEY` record the arrival; a second scan shows "Sudah check-in sebelumnya".
   Staff can also search by name for guests without their QR.
@@ -114,8 +115,8 @@ How it works:
 
 ### Setup (once per Supabase project)
 
-1. Apply `supabase/migrations/0001_invitation.sql`, `0002_guest_services.sql` and
-   `0003_group_invitations.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
+1. Apply `supabase/migrations/0001_invitation.sql`, `0002_guest_services.sql`,
+   `0003_group_invitations.sql` and `0004_auto_approve_wishes.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
    Try it on a test project first.
 2. In Vercel → Settings → Environment Variables (Production, and Preview if used), add
    `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Project Settings → API Keys → secret key) and
@@ -144,9 +145,10 @@ npm run guests -- export                        # attendance + wishes CSV backup
   For a group, `max_guests` is the limit **per person who answers**. Share the group link in
   that group's chat only: anyone who has it can answer. Answers per person:
   `select * from private.group_responses;`
-- **Approve wishes**: Supabase → SQL Editor: `select * from private.wishes_to_review;`
-  then `update public.wishes set approved = true where id = '<id>';` (or toggle `approved`
-  in Table Editor → wishes). To hide one again, set it back to false.
+- **Hide a wish**: wishes appear without review. To take one down: Supabase → Table Editor →
+  wishes, set `approved` to false (or SQL Editor:
+  `update public.wishes set approved = false where id = '<id>';`). It leaves the site within
+  about a minute; set it back to true to show it again.
 - **Attendance**: `select * from private.attendance_totals;` (`total_guests_attending`
   includes group answers) and `select * from private.guest_overview;`, or
   `npm run guests -- export` (one row per personal invitation and per group answer).
