@@ -286,27 +286,31 @@ test('album is shuffled so photos from the same moment never touch, and the view
   await expect(page.locator('[data-lightbox-counter]')).toHaveText(/^4 \/ \d+$/);
 });
 
-test('only the main gift accounts are shown; the extra accounts and their button are hidden', async ({ page }) => {
+test('Superbank and BCA are shown; the other accounts open in a pop-up', async ({ page }) => {
   await page.goto(`/?to=Budi&k=${CODE}`);
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.keyboard.press('Escape'); // close the Entry Access Card
   const gift = page.locator('#gift');
   await gift.scrollIntoViewIfNeeded();
-  await expect(gift.getByText('Superbank', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
-  // Not just hidden: the extra account numbers are not in the page at all.
-  const html = await page.content();
-  for (const value of ['1310015634357', '0700237524', '901279716707', '082237058889']) expect(html).not.toContain(value);
+  await expect(gift.getByText('000001628502')).toBeVisible();
+  await expect(gift.getByText('0700237524')).toBeVisible();
+  await expect(gift.getByText('1310015634357')).toBeHidden();
+  await page.getByRole('button', { name: 'Lihat rekening lainnya' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Rekening & Dompet Digital' });
+  for (const value of ['1310015634357', '901279716707', '082237058889']) await expect(dialog.getByText(value)).toBeVisible();
+  await expect(dialog.getByText('0700237524')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeFocused();
 });
 
 // Without JavaScript the personal-code check cannot run, so the gift section stays readable.
-test('without JavaScript the extra gift accounts stay hidden too', async ({ browser }) => {
+test('without JavaScript every gift account is listed and the pop-up button is hidden', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4322/');
   const gift = page.locator('#gift');
-  await expect(gift.getByText('000001628502')).toBeVisible();
-  await expect(gift.getByText('1310015634357')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toHaveCount(0);
+  for (const value of ['000001628502', '0700237524', '1310015634357', '901279716707', '082237058889']) await expect(gift.getByText(value)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lihat rekening lainnya' })).toBeHidden();
   await context.close();
 });
