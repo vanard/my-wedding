@@ -6,10 +6,23 @@ import { invitation } from '../content/invitation';
 const { gallery, closingQuote, couple } = invitation;
 // Full-size views are generated only when a guest opens them (or follows the link without JS).
 const full = await Promise.all(gallery.photos.map((photo) => getImage({ src: photo.src, width: Math.min(1400, photo.src.width), format: 'webp' })));
-// Same-moment group per photo, used by the per-visit shuffle in src/scripts/gallery.ts.
-const momentOf = new Map(gallery.moments.flatMap((files, group) => files.map((file) => [file, String(group)] as const)));
-const unknown = [...momentOf.keys()].filter((file) => !gallery.photos.some((photo) => photo.file === file));
-if (unknown.length) throw new Error(`gallery.moments names photos that are not in the album: ${unknown.join(', ')}`);
+// Justified rows, worked out here so they do not depend on the screen: a row takes photos
+// (in album order) while their width/height ratios add up to at most ROW. Two portraits
+// (2:3, 0.67 each) or a portrait and a square share a row; a landscape photo (1.5) has a row
+// of its own. In a row, each photo's width is in proportion to its ratio, so all have the
+// same height and together fill the width. A short last row is padded to a normal row.
+const ROW = 1.8;
+const ratio = (photo: { src: ImageMetadata }) => photo.src.width / photo.src.height;
+const rows: number[][] = [];
+let sum = Infinity;
+gallery.photos.forEach((photo, index) => {
+  const r = ratio(photo);
+  if (sum + r > ROW) { rows.push([]); sum = 0; }
+  rows[rows.length - 1]!.push(index);
+  sum += r;
+});
+const lastSum = rows.at(-1)?.reduce((total, index) => total + ratio(gallery.photos[index]!), 0) ?? 0;
+const spare = Math.max(0, 4 / 3 - lastSum);
 ---
 <section id="gallery" class="section gallery" aria-labelledby="gallery-heading">
   <div class="center" data-reveal>
@@ -28,14 +41,18 @@ if (unknown.length) throw new Error(`gallery.moments names photos that are not i
     </div>
   )}
   <ul class="grid" data-gallery>
-    {gallery.photos.map((photo, index) => (
-      <li data-moment={(photo.file && momentOf.get(photo.file)) || undefined}>
+    {rows.map((row, rowIndex) => [
+      rowIndex > 0 && <li class="break" aria-hidden="true"></li>,
+      ...row.map((index) => [index, gallery.photos[index]!] as const).map(([index, photo]) => (
+      <li style={`--ar: ${ratio(photo).toFixed(4)}`}>
         <a href={full[index]?.src} data-gallery-item data-alt={photo.alt}>
-          <Photo photo={photo} widths={[320, 480, 640]} sizes="(min-width: 960px) 230px, 50vw" class="tile" />
+          <Photo photo={photo} widths={[320, 480, 640, 960]} sizes={photo.src.width > photo.src.height ? '(min-width: 960px) 560px, 100vw' : '(min-width: 960px) 280px, 50vw'} class="tile" />
           <span class="sr-only">Perbesar foto {index + 1}</span>
         </a>
       </li>
-    ))}
+      )),
+      rowIndex === rows.length - 1 && spare > 0.05 && <li class="spare" aria-hidden="true" style={`--ar: ${spare.toFixed(4)}`}></li>,
+    ])}
   </ul>
   <dialog class="lightbox" aria-label="Galeri foto" data-lightbox>
     <img alt="" data-lightbox-image />
@@ -64,8 +81,10 @@ if (unknown.length) throw new Error(`gallery.moments names photos that are not i
   .facade::after { content: ''; position: absolute; inset: 0; background: rgb(18 18 17 / 0.25); transition: background-color .2s; }
   .facade:hover::after { background: rgb(18 18 17 / 0.1); }
   .play { position: absolute; z-index: 1; inset: 0; margin: auto; display: grid; place-items: center; width: 64px; height: 64px; padding-left: 4px; border-radius: 50%; background: rgb(18 18 17 / 0.55); border: 1px solid rgb(244 240 232 / 0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-  .grid { columns: 2; column-gap: .6rem; list-style: none; padding: 0; margin: 2rem 0 0; }
-  li { break-inside: avoid; margin-bottom: .6rem; }
+  /* Justified rows (see ROW above; no JS): a tile's width is its share (--ar) of the row. */
+  .grid { display: flex; flex-wrap: wrap; column-gap: .5rem; list-style: none; padding: 0; margin: 2rem 0 0; }
+  li { flex: var(--ar) 1 0; min-width: 0; margin-bottom: .5rem; }
+  li.break { flex-basis: 100%; height: 0; margin: 0; }
   li a { display: block; border-radius: 8px; overflow: hidden; }
   li :global(.tile) { width: 100%; height: auto; }
   .lightbox { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(12 12 11 / 0.96); color: var(--ink); }

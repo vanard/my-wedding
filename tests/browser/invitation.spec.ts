@@ -304,24 +304,30 @@ test('floating buttons step aside while the video clip is on screen', async ({ p
   await expect(side).toBeVisible();
 });
 
-test('album is shuffled so photos from the same moment never touch, and the viewer follows the order', async ({ page }) => {
+test('album keeps its order in justified rows, and the viewer follows the order', async ({ page }) => {
+  const order = async () => page.locator('[data-gallery-item]').evaluateAll((links) => links.map((a) => (a as HTMLAnchorElement).href));
   await page.goto('/?to=Budi');
+  const first = await order();
+  await page.reload();
+  expect(await order()).toEqual(first); // no shuffle
   await page.getByRole('link', { name: 'Buka Undangan' }).click();
   await page.locator('#gallery').scrollIntoViewIfNeeded();
-  const touching = await page.evaluate(() => {
-    const tiles = [...document.querySelectorAll<HTMLElement>('[data-gallery] li')].map((li) => ({ moment: li.dataset.moment, box: li.getBoundingClientRect() }));
-    let count = 0;
-    for (let i = 0; i < tiles.length; i++) for (let j = i + 1; j < tiles.length; j++) {
-      const a = tiles[i]!, b = tiles[j]!;
-      if (a.moment === undefined || a.moment !== b.moment) continue;
-      const sameColumn = Math.abs(a.box.left - b.box.left) < 5;
-      const gap = Math.max(a.box.top, b.box.top) - Math.min(a.box.bottom, b.box.bottom);
-      const overlap = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
-      if (sameColumn ? gap < 20 : overlap > 0.2 * Math.min(a.box.height, b.box.height)) count++;
+  // Every row is one height and fills the grid's width (the last row may be shorter).
+  const rows = await page.locator('[data-gallery]').evaluate((grid) => {
+    const width = grid.getBoundingClientRect().width;
+    const byTop = new Map<number, DOMRect[]>();
+    for (const li of grid.querySelectorAll('li:not(.break):not(.spare)')) {
+      const box = li.getBoundingClientRect();
+      byTop.set(Math.round(box.top), [...(byTop.get(Math.round(box.top)) ?? []), box]);
     }
-    return count;
+    return [...byTop.values()].map((boxes) => ({
+      heights: boxes.map((b) => Math.round(b.height)),
+      span: Math.round(boxes.at(-1)!.right - boxes[0]!.left) / width,
+    }));
   });
-  expect(touching).toBe(0);
+  expect(rows.length).toBeGreaterThan(1);
+  for (const row of rows) expect(Math.max(...row.heights) - Math.min(...row.heights)).toBeLessThanOrEqual(1);
+  for (const row of rows.slice(0, -1)) expect(row.span).toBeGreaterThan(0.99);
   const third = page.locator('[data-gallery-item]').nth(2);
   const href = await third.getAttribute('href');
   // Photos do not enlarge on hover.

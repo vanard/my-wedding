@@ -12,7 +12,7 @@ import clipPoster from '../assets/media/video-clip.jpg';
 // 1200×630 link preview built from img_4303 by `npm run media:preview`.
 import linkPreview from '../assets/media/link-preview.jpg';
 
-// Every photo in src/assets/media/album/ appears in the gallery, in file-name order.
+// Every photo in src/assets/media/album/ appears in the gallery.
 const albumFiles = import.meta.glob<ImageMetadata>('../assets/media/album/*.{jpg,jpeg,png}', { eager: true, import: 'default' });
 // Camera files (upper-case extensions, HEIC) are not picked up above; stop the build instead of
 // silently leaving them out of the gallery.
@@ -28,11 +28,40 @@ if (oversized.length) {
   throw new Error(`Unprocessed photos in src/assets/media/album/: ${oversized.map(([f]) => f.split('/').pop()).join(', ')}. `
     + 'Move them to media-originals/album/ and run `npm run media:photos -- media-originals/album/<file>` (see src/assets/media/README.md).');
 }
-// `file` (name without folder) is what `gallery.moments` refers to.
-const album: (Photo & { file: string })[] = Object.keys(albumFiles).sort().map((file, index) => ({
-  src: albumFiles[file]!,
+// Album order, top to bottom: move a line to move a photo. Photos in the folder that are not
+// listed here follow at the end in file-name order, so a newly added photo always shows up.
+// Portrait photos share a row (two per row on a phone); a landscape photo gets a row of its own.
+const albumOrder = [
+  'img_3994.jpg',
+  'img_3996.jpg',
+  'img_4056.jpg',
+  'img_4087.jpg',
+  'img_4102.jpg',
+  'img_4113.jpg',
+  'img_4114.jpg',
+  'img_4117.jpg',
+  'img_4127.jpg',
+  'img_4262.jpg',
+  'img_4284b.jpg',
+  'img_4286.jpg',
+  'img_4290.jpg',
+  'img_4293b.jpg',
+  'img_4294.jpg',
+  'img_4297.jpg',
+  'img_4298.jpg',
+  'img_4300.jpg',
+  'img_4301.jpg',
+  'photo-09.jpg',
+];
+const albumByName = new Map(Object.entries(albumFiles).map(([path, image]) => [path.split('/').pop()!, image]));
+const missing = albumOrder.filter((file) => !albumByName.has(file));
+if (missing.length) throw new Error(`albumOrder names photos that are not in src/assets/media/album/: ${missing.join(', ')}`);
+if (new Set(albumOrder).size !== albumOrder.length) throw new Error('albumOrder lists a photo twice.');
+const albumNames = [...albumOrder, ...[...albumByName.keys()].sort().filter((file) => !albumOrder.includes(file))];
+const album: (Photo & { file: string })[] = albumNames.map((file, index) => ({
+  src: albumByName.get(file)!,
   alt: `Foto Vian dan Ghea ${index + 1}`,
-  file: file.split('/').pop()!,
+  file,
 }));
 
 export interface Photo {
@@ -92,12 +121,8 @@ export interface InvitationContent {
   gallery: {
     quote: string;
     video: { youtubeId: string; poster: Photo; title: string } | null;
+    /** In display order (see `albumOrder`). */
     photos: (Photo & { file?: string })[];
-    /**
-     * Album photos from the same moment (near-identical shots), by file name. The gallery is
-     * shuffled on every visit, and photos in the same group are never placed next to each other.
-     */
-    moments: string[][];
   };
   /** Quote after the gallery; `photo` is optional (null shows the quote on the background video). */
   closingQuote: { text: string; photo: Photo | null } | null;
@@ -212,14 +237,6 @@ export const invitation: InvitationContent = {
     // https://www.youtube.com/watch?v=gpVMepCXalA
     video: { youtubeId: 'gpVMepCXalA', poster: { src: clipPoster, alt: '' }, title: 'Video klip prewedding Ghea & Vian' },
     photos: album,
-    moments: [
-      ['img_3994.jpg', 'img_3996.jpg', 'img_4286.jpg'], // standing among the trees
-      ['img_4056.jpg', 'img_4284b.jpg', 'photo-09.jpg'], // garden: lying on the grass, bench, veil
-      ['img_4293b.jpg', 'img_4297.jpg', 'img_4298.jpg'], // veil
-      ['img_4102.jpg', 'img_4262.jpg', 'img_4300.jpg'], // beach walk
-      ['img_4290.jpg', 'img_4294.jpg'], // night lights and sparks
-      ['img_4087.jpg', 'img_4113.jpg', 'img_4117.jpg'], // engagement: at the flower wall
-    ],
   },
   closingQuote: {
     text: 'Di antara banyak hal yang kami syukuri, salah satunya adalah bisa menyebut satu sama lain sebagai rumah.',
