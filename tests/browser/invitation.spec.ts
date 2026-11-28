@@ -82,6 +82,40 @@ test('essential content remains readable without JavaScript at 320px', async ({ 
   await context.close();
 });
 
+test('the background video shows only while it really plays, so a paused or frozen video never covers the photo', async ({ page }) => {
+  // Stand-in players: tests control playing, pausing and a silent freeze (time stops).
+  await page.addInitScript(() => {
+    const paused = new WeakMap<HTMLMediaElement, boolean>();
+    const w = window as unknown as { plays: number; frozen: boolean; time: number };
+    w.plays = 0; w.frozen = false; w.time = 0;
+    Object.defineProperty(HTMLMediaElement.prototype, 'paused', { get() { return paused.get(this) ?? true; } });
+    Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', { get() { return w.time; }, set() {} });
+    HTMLMediaElement.prototype.play = function () {
+      if (this.tagName === 'VIDEO') w.plays++;
+      paused.set(this, false);
+      this.dispatchEvent(new Event('play'));
+      this.dispatchEvent(new Event('playing'));
+      return Promise.resolve();
+    };
+    HTMLMediaElement.prototype.pause = function () { paused.set(this, true); this.dispatchEvent(new Event('pause')); };
+    setInterval(() => { if (!w.frozen) w.time += 0.25; }, 250);
+  });
+  await page.goto('/?to=Budi');
+  const main = page.locator('video.whole');
+  await expect(main).toHaveClass(/is-playing/);
+
+  // iOS pauses it (a call, another app): the photo shows again, and it restarts on return.
+  await main.evaluate((video: HTMLVideoElement) => video.pause());
+  await expect(main).not.toHaveClass(/is-playing/);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(main).toHaveClass(/is-playing/);
+
+  // Frozen without a pause event: the watchdog fades it out and restarts it.
+  const plays = await page.evaluate(() => (window as unknown as { plays: number }).plays);
+  await page.evaluate(() => { (window as unknown as { frozen: boolean }).frozen = true; });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { plays: number }).plays), { timeout: 8000 }).toBeGreaterThan(plays);
+});
+
 test('requests music from the opening gesture and reports rejected playback', async ({ page }) => {
   // Test the player wiring, not an absent soundtrack or the browser's real autoplay policy.
   await page.addInitScript(() => {
