@@ -9,6 +9,8 @@ const KNOWN: Record<string, [number, string]> = {
   INVALID_GUEST_COUNT: [422, 'Jumlah tamu melebihi jatah undangan Anda.'],
   INVALID_WISH: [422, 'Nama dan ucapan wajib diisi.'],
   GROUP_DETAILS_REQUIRED: [422, 'Isi nama Anda.'],
+  NAME_TAKEN: [409, 'Nama ini sudah dipilih dari ponsel lain. Pilih nama Anda sendiri, atau hubungi mempelai bila ini nama Anda.'],
+  MEMBER_NOT_FOUND: [422, 'Nama tidak ditemukan di grup ini. Muat ulang halaman lalu pilih nama Anda.'],
   GROUP_FULL: [409, 'Pendaftaran melalui tautan grup ini sudah penuh. Silakan hubungi mempelai.'],
   RATE_LIMITED: [429, 'Terlalu banyak percobaan. Silakan coba lagi dalam beberapa menit.'],
   WISH_LIMIT: [429, 'Batas jumlah ucapan untuk undangan ini sudah tercapai. Terima kasih!'],

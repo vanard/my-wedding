@@ -127,6 +127,33 @@ test('retried wishes are stored once, shown right away and hidden when unapprove
   expect(hidden.body.some((w: { message: string }) => w.message === `Pesan ${run}`)).toBe(false);
 });
 
+test('group members: a name locks to the first phone, answers stay private, check-in is per person', async () => {
+  const g = await party('members', 1, true);
+  const added = await call('group_members', [{ party_id: g.id, name: 'Budi' }, { party_id: g.id, name: 'Sari' }]);
+  expect(added.status).toBe(201);
+  const id = (name: string) => added.body.find((m: { name: string }) => m.name === name).id as string;
+  const phoneA = randomUUID(), phoneB = randomUUID();
+
+  // Concurrent first answers for the same name: exactly one phone gets it.
+  const race = await Promise.all([phoneA, phoneB].map((key) =>
+    rpc('submit_member_rsvp', { p_token_hash: g.tokenHash, p_member_id: id('Budi'), p_respondent_key: key, p_attendance: 'attending' })));
+  expect(race.map((r) => r.status).sort()).toEqual([200, 400]);
+  expect(race.find((r) => r.status === 400)!.body.message).toBe('NAME_TAKEN');
+  const winner = race[0]!.status === 200 ? phoneA : phoneB;
+
+  const seen = await rpc('guest_party', { p_token_hash: g.tokenHash, p_respondent_key: winner === phoneA ? phoneB : phoneA });
+  expect(seen.body.members.map((m: { name: string; taken: boolean }) => [m.name, m.taken])).toEqual([['Budi', true], ['Sari', false]]);
+  expect(JSON.stringify(seen.body.members)).not.toContain('attending');
+
+  const first = await rpc('check_in_member', { p_member_id: id('Budi'), p_token_hash: g.tokenHash });
+  expect(first.body).toMatchObject({ already: false, member: { name: 'Budi' } });
+  const again = await rpc('check_in_member', { p_member_id: id('Budi'), p_party_id: g.id });
+  expect(again.body.already).toBe(true);
+  // Browser keys cannot reach members or the new functions.
+  expect((await call(`group_members?party_id=eq.${g.id}`, undefined, PUBLISHABLE!, 'GET')).status).toBeGreaterThanOrEqual(400);
+  expect((await rpc('submit_member_rsvp', { p_token_hash: g.tokenHash, p_member_id: id('Sari'), p_respondent_key: phoneA, p_attendance: 'declined' }, PUBLISHABLE!)).status).toBeGreaterThanOrEqual(400);
+});
+
 test('check-in records the first arrival and reports repeats', async () => {
   const p = await party('checkin', 2);
   const first = await rpc('check_in', { p_token_hash: p.tokenHash });

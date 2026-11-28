@@ -1,26 +1,33 @@
 // RSVP and wishes. Nothing is requested until the guest scrolls near these sections, so most
 // of the invitation never waits for (or depends on) the database.
 // - Personal link (?k=<code>): loads the party once, enables both forms.
-// - Group link (also ?k=, marked as a group in the database): each person adds their own name
-//   and answers for themselves. This browser keeps a random respondent key, so it updates its
-//   own answer and retries never add a second one; other people's answers add up instead.
+// - Group link (also ?k=, marked as a group in the database): each person answers for
+//   themselves. If the group lists its members, they pick their own name from the list (a name
+//   is locked to the first phone that answers for it, and the Entry Access Card QR then
+//   carries that person); otherwise they type their name. This browser keeps a random
+//   respondent key, so it updates its own answer and retries never add a second one.
 // - Without a code: the RSVP section is hidden (invitation.ts), the wish form stays disabled
 //   with a note, and approved wishes are still listed.
-import { guestCode } from './guest-code';
+import { guestCode, rememberMember } from './guest-code';
 import type { Party, PublicWish as Wish, Rsvp, WishesPage } from '../lib/contracts';
 
 const OFFLINE = 'Koneksi terputus. Periksa internet Anda lalu coba lagi.';
 const FAILED = 'Terjadi kesalahan. Silakan coba lagi beberapa saat lagi.';
+
+/** A failed request: the guest-facing message, and the server's error code when it sent one. */
+class RequestError extends Error {
+  constructor(message: string, readonly code?: string) { super(message); }
+}
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, { ...init, headers: { Accept: 'application/json', ...init.headers } });
   } catch {
-    throw new Error(OFFLINE);
+    throw new RequestError(OFFLINE);
   }
-  const body = await response.json().catch(() => null) as { error?: { message?: string } } | null;
-  if (!response.ok) throw new Error(body?.error?.message ?? FAILED);
+  const body = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;
+  if (!response.ok) throw new RequestError(body?.error?.message ?? FAILED, body?.error?.code);
   return body as T;
 }
 
@@ -72,13 +79,13 @@ export function initGuestForms() {
     return partyRequest;
   };
 
-  if (rsvpForm) initRsvp(rsvpForm, auth, respondent, loadParty);
+  if (rsvpForm) initRsvp(rsvpForm, code, auth, respondent, loadParty);
   if (wishForm) initWishForm(wishForm, auth, loadParty);
   const wishes = document.querySelector<HTMLElement>('#wishes');
   if (wishes) initWishList(wishes);
 }
 
-function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, respondent: string, loadParty: () => Promise<Party>) {
+function initRsvp(form: HTMLFormElement, code: string | null, auth: Record<string, string> | null, respondent: string, loadParty: () => Promise<Party>) {
   const note = form.querySelector<HTMLElement>('[data-rsvp-note]')!;
   const fields = form.querySelector<HTMLFieldSetElement>('[data-rsvp-fields]')!;
   const partyBox = form.querySelector<HTMLElement>('[data-rsvp-party]')!;
@@ -87,6 +94,8 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
   const groupNote = form.querySelector<HTMLElement>('[data-rsvp-group-note]')!;
   const nameField = form.querySelector<HTMLElement>('[data-rsvp-name-field]')!;
   const nameInput = form.querySelector<HTMLInputElement>('#rsvp-name')!;
+  const memberField = form.querySelector<HTMLElement>('[data-rsvp-member-field]')!;
+  const memberSelect = form.querySelector<HTMLSelectElement>('#rsvp-member')!;
   const submit = form.querySelector<HTMLButtonElement>('[data-rsvp-submit]')!;
   const retry = form.querySelector<HTMLButtonElement>('[data-rsvp-retry]')!;
   const status = form.querySelector<HTMLElement>('[data-rsvp-status]')!;
@@ -98,6 +107,7 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
   // count for the totals: the whole invitation (its max_guests) on a personal link, and one
   // person per answer on a group link, where each person answers for themselves.
   let group = false;
+  let members = false;
   let attendingCount = 1;
   const saved = (rsvp: Rsvp) => {
     const who = group && rsvp.name ? ` atas nama ${rsvp.name}` : '';
@@ -112,10 +122,26 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
     partyName.textContent = party.name;
     partyBox.hidden = false;
     groupNote.hidden = !group;
-    nameField.hidden = !group;
-    nameInput.disabled = !group;
-    nameInput.required = group;
-    if (group && party.rsvp?.name && !nameInput.value) nameInput.value = party.rsvp.name;
+    // A group that lists its members: pick a name instead of typing one.
+    members = group && Array.isArray(party.members);
+    nameField.hidden = !group || members;
+    nameInput.disabled = !group || members;
+    nameInput.required = group && !members;
+    memberField.hidden = !members;
+    memberSelect.disabled = !members;
+    memberSelect.required = members;
+    if (members) {
+      const placeholder = new Option('Pilih nama…', '');
+      memberSelect.replaceChildren(placeholder, ...party.members!.map((member) => {
+        const option = new Option(member.taken ? `${member.name} (sudah dipilih)` : member.name, member.id);
+        option.disabled = member.taken;
+        option.dataset.name = member.name;
+        return option;
+      }));
+      const mine = party.members!.find((member) => member.mine);
+      memberSelect.value = mine?.id ?? '';
+      if (code) rememberMember(code, mine ? { id: mine.id, name: mine.name } : null);
+    } else if (group && party.rsvp?.name && !nameInput.value) nameInput.value = party.rsvp.name;
     note.hidden = true;
     retry.hidden = true;
     attendingCount = group ? 1 : party.maxGuests;
@@ -146,7 +172,8 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
     if (pending) return;
     const value = attendance();
     if (!value) { status.textContent = 'Pilih hadir atau tidak hadir.'; return; }
-    if (group && !nameInput.value.trim()) { status.textContent = 'Isi nama Anda.'; nameInput.focus(); return; }
+    if (members && !memberSelect.value) { status.textContent = 'Pilih nama Anda.'; memberSelect.focus(); return; }
+    if (group && !members && !nameInput.value.trim()) { status.textContent = 'Isi nama Anda.'; nameInput.focus(); return; }
     pending = true;
     submit.disabled = true;
     status.textContent = 'Menyimpan…';
@@ -157,9 +184,11 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
         body: JSON.stringify({
           attendance: value,
           guestCount: value === 'attending' ? attendingCount : 0,
-          ...(group ? { name: nameInput.value, respondentKey: respondent } : {}),
+          ...(members ? { memberId: memberSelect.value, respondentKey: respondent }
+            : group ? { name: nameInput.value, respondentKey: respondent } : {}),
         }),
       });
+      if (members && code && rsvp.memberId && rsvp.name) rememberMember(code, { id: rsvp.memberId, name: rsvp.name });
       submit.textContent = 'Perbarui konfirmasi';
       const who = group && rsvp.name ? `, ${rsvp.name}` : '';
       status.textContent = rsvp.attendance === 'attending'
@@ -168,6 +197,11 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
     } catch (error) {
       // Choices stay as entered so the guest can simply try again.
       status.textContent = error instanceof Error ? error.message : FAILED;
+      // Someone else answered for this name meanwhile: show it as taken.
+      if (members && error instanceof RequestError && error.code === 'NAME_TAKEN') {
+        const option = memberSelect.selectedOptions[0];
+        if (option?.value) { option.disabled = true; option.text = `${option.dataset.name} (sudah dipilih)`; memberSelect.value = ''; }
+      }
     } finally {
       pending = false;
       submit.disabled = false;

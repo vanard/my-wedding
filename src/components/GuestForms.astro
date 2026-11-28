@@ -20,6 +20,10 @@ import { invitation } from '../content/invitation';
         <label for="rsvp-name">Nama Anda</label>
         <input id="rsvp-name" name="respondentName" autocomplete="name" maxlength="100" disabled />
       </div>
+      <div class="field" data-rsvp-member-field hidden>
+        <label for="rsvp-member">Pilih nama Anda</label>
+        <select id="rsvp-member" name="memberId" disabled><option value="">Pilih nama…</option></select>
+      </div>
       <fieldset class="field">
         <legend>Konfirmasi kehadiran</legend>
         <div class="choices">

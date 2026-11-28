@@ -27,12 +27,21 @@ export function respondentKey(value: unknown): string | null {
   return value.toLowerCase();
 }
 
+/** A database id (group member, party). */
+export function uuid(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string' || !UUID.test(value)) throw new HttpError(400, 'INVALID_INPUT', BAD_REQUEST);
+  return value.toLowerCase();
+}
+
 export interface RsvpInput {
   attendance: 'attending' | 'declined';
   guestCount: number;
   /** Group links only; the database requires both for a group and ignores them otherwise. */
   respondentKey: string | null;
   name: string | null;
+  /** Group with members: the member this phone answers for (requires respondentKey). */
+  memberId: string | null;
 }
 
 export function rsvpInput(body: Record<string, unknown>): RsvpInput {
@@ -40,9 +49,13 @@ export function rsvpInput(body: Record<string, unknown>): RsvpInput {
   const group = {
     respondentKey: respondentKey(body.respondentKey),
     name: body.name === undefined || body.name === null ? null : text(body.name, 'Nama', LIMITS.name),
+    memberId: uuid(body.memberId),
   };
+  if (group.memberId && !group.respondentKey) throw new HttpError(400, 'INVALID_INPUT', BAD_REQUEST);
   if (attendance === 'declined') return { attendance, guestCount: 0, ...group };
   if (attendance !== 'attending') throw new HttpError(422, 'INVALID_ATTENDANCE', 'Pilih hadir atau tidak hadir.');
+  // A member answers for themselves: hadir is one person.
+  if (group.memberId) return { attendance, guestCount: 1, ...group };
   if (typeof guestCount !== 'number' || !Number.isInteger(guestCount) || guestCount < 1 || guestCount > LIMITS.guests) {
     throw new HttpError(422, 'INVALID_GUEST_COUNT', 'Pilih jumlah tamu yang hadir.');
   }
