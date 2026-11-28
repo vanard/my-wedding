@@ -26,7 +26,7 @@ test('RSVP from a personal link: loads the party, keeps input after a failure, t
     posts.push(route.request());
     return ++attempt === 1
       ? route.fulfill(json({ error: { code: 'DB_UNAVAILABLE', message: 'Layanan sedang tidak tersedia.' } }, 503))
-      : route.fulfill(json({ rsvp: { attendance: 'attending', guestCount: 2, updatedAt: '2026-11-14T02:00:00Z' } }));
+      : route.fulfill(json({ rsvp: { attendance: 'attending', guestCount: 3, updatedAt: '2026-11-14T02:00:00Z' } }));
   });
 
   await openInvitation(page, `?to=Budi&k=${CODE}`);
@@ -35,28 +35,29 @@ test('RSVP from a personal link: loads the party, keeps input after a failure, t
   await page.locator('#rsvp').scrollIntoViewIfNeeded();
   const form = page.locator('[data-rsvp-form]');
   await expect(form.locator('[data-rsvp-party-name]')).toHaveText('Keluarga Budi');
-  await expect(page.locator('#party-size option')).toHaveCount(3);
+  // Only hadir / tidak hadir: no head-count field.
+  await expect(form.getByLabel(/jumlah/i)).toHaveCount(0);
 
   await form.getByRole('radio', { name: 'Hadir', exact: true }).check();
-  await page.locator('#party-size').selectOption('2');
   const submit = page.getByRole('button', { name: 'Kirim konfirmasi' });
   await submit.click();
   await expect(form.locator('[data-rsvp-status]')).toHaveText('Layanan sedang tidak tersedia.');
   await expect(form.locator('input[value="attending"]')).toBeChecked();
-  await expect(page.locator('#party-size')).toHaveValue('2');
 
   await submit.click();
-  await expect(form.locator('[data-rsvp-status]')).toContainText('Kehadiran 2 orang telah tercatat');
+  await expect(form.locator('[data-rsvp-status]')).toHaveText('Terima kasih! Kehadiran Anda telah tercatat.');
   await expect(page.getByRole('button', { name: 'Perbarui konfirmasi' })).toBeEnabled();
   expect(posts).toHaveLength(2);
-  expect(posts[1]!.postDataJSON()).toEqual({ attendance: 'attending', guestCount: 2 });
+  // "Hadir" counts the whole invitation (maxGuests).
+  expect(posts[1]!.postDataJSON()).toEqual({ attendance: 'attending', guestCount: 3 });
   expect(posts[1]!.url()).not.toContain(CODE);
   // Both forms share one party request.
   expect(guestCalls).toBe(1);
 
-  // Declining hides the guest count.
   await form.getByRole('radio', { name: 'Tidak hadir' }).check();
-  await expect(page.locator('#party-size')).toBeHidden();
+  await page.getByRole('button', { name: 'Perbarui konfirmasi' }).click();
+  await expect.poll(() => posts.length).toBe(3);
+  expect(posts[2]!.postDataJSON()).toEqual({ attendance: 'declined', guestCount: 0 });
 });
 
 test('an existing RSVP is shown for updating', async ({ page }) => {
@@ -65,7 +66,7 @@ test('an existing RSVP is shown for updating', async ({ page }) => {
   await openInvitation(page, `?to=Sari&k=${CODE}`);
   await page.locator('#rsvp').scrollIntoViewIfNeeded();
   await expect(page.locator('[data-rsvp-form] input[value="attending"]')).toBeChecked();
-  await expect(page.locator('#party-size')).toHaveValue('3');
+  await expect(page.locator('[data-rsvp-status]')).toHaveText('Konfirmasi tersimpan: hadir.');
   await expect(page.getByRole('button', { name: 'Perbarui konfirmasi' })).toBeVisible();
   await expect(page.locator('#wish-name')).toHaveValue('Ibu Sari');
 });
@@ -92,7 +93,6 @@ test('group link: each person answers with their own name; this phone keeps its 
   await expect(form.locator('[data-rsvp-party-label]')).toHaveText('Undangan grup');
   await expect(form.locator('[data-rsvp-party-name]')).toHaveText('Teman Kantor');
   await form.getByRole('radio', { name: 'Hadir', exact: true }).check();
-  await page.locator('#party-size').selectOption('2');
   await page.getByRole('button', { name: 'Kirim konfirmasi' }).click();
   // The name is required on a group link (the browser's own check); nothing is sent without it.
   expect(await page.getByLabel('Nama Anda').evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true);
@@ -100,15 +100,16 @@ test('group link: each person answers with their own name; this phone keeps its 
 
   await page.getByLabel('Nama Anda').fill('Budi');
   await page.getByRole('button', { name: 'Kirim konfirmasi' }).click();
-  await expect(form.locator('[data-rsvp-status]')).toHaveText('Terima kasih, Budi! Kehadiran 2 orang telah tercatat.');
-  expect(posts[0]).toEqual({ attendance: 'attending', guestCount: 2, name: 'Budi', respondentKey: keys[0] });
+  await expect(form.locator('[data-rsvp-status]')).toHaveText('Terima kasih, Budi! Kehadiran Anda telah tercatat.');
+  // On a group link each person answers for themselves: one person.
+  expect(posts[0]).toEqual({ attendance: 'attending', guestCount: 1, name: 'Budi', respondentKey: keys[0] });
   expect(keys[0]).toMatch(/^[0-9a-f-]{36}$/);
 
   // Reopening on the same phone shows this person's own answer, using the same key.
   await openInvitation(page, `?to=Teman%20Kantor&k=${CODE}`);
   await page.locator('#rsvp').scrollIntoViewIfNeeded();
   await expect(page.getByLabel('Nama Anda')).toHaveValue('Budi');
-  await expect(page.locator('#party-size')).toHaveValue('2');
+  await expect(page.locator('[data-rsvp-status]')).toHaveText('Konfirmasi tersimpan atas nama Budi: hadir.');
   await expect(page.locator('#wish-name')).toHaveValue('Budi');
   expect(keys[1]).toBe(keys[0]);
 });

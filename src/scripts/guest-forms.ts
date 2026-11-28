@@ -2,8 +2,8 @@
 // of the invitation never waits for (or depends on) the database.
 // - Personal link (?k=<code>): loads the party once, enables both forms.
 // - Group link (also ?k=, marked as a group in the database): each person adds their own name
-//   and head count. This browser keeps a random respondent key, so it updates its own answer
-//   and retries never add a second one; other people's answers add up instead of replacing it.
+//   and answers for themselves. This browser keeps a random respondent key, so it updates its
+//   own answer and retries never add a second one; other people's answers add up instead.
 // - Without a code: the RSVP section is hidden (invitation.ts), the wish form stays disabled
 //   with a note, and approved wishes are still listed.
 import { guestCode } from './guest-code';
@@ -87,26 +87,22 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
   const groupNote = form.querySelector<HTMLElement>('[data-rsvp-group-note]')!;
   const nameField = form.querySelector<HTMLElement>('[data-rsvp-name-field]')!;
   const nameInput = form.querySelector<HTMLInputElement>('#rsvp-name')!;
-  const count = form.querySelector<HTMLSelectElement>('[data-rsvp-count]')!;
-  const countField = form.querySelector<HTMLElement>('[data-rsvp-count-field]')!;
   const submit = form.querySelector<HTMLButtonElement>('[data-rsvp-submit]')!;
   const retry = form.querySelector<HTMLButtonElement>('[data-rsvp-retry]')!;
   const status = form.querySelector<HTMLElement>('[data-rsvp-status]')!;
   if (!auth) return;
 
   const attendance = () => form.querySelector<HTMLInputElement>('input[name="attendance"]:checked')?.value;
-  const syncCount = () => {
-    const declined = attendance() === 'declined';
-    count.disabled = declined;
-    countField.hidden = declined;
-  };
-  form.addEventListener('change', syncCount);
 
+  // Guests only choose hadir / tidak hadir (the couple's choice). "Hadir" still records a head
+  // count for the totals: the whole invitation (its max_guests) on a personal link, and one
+  // person per answer on a group link, where each person answers for themselves.
   let group = false;
+  let attendingCount = 1;
   const saved = (rsvp: Rsvp) => {
     const who = group && rsvp.name ? ` atas nama ${rsvp.name}` : '';
     return rsvp.attendance === 'attending'
-      ? `Konfirmasi tersimpan${who}: hadir, ${rsvp.guestCount} orang.`
+      ? `Konfirmasi tersimpan${who}: hadir.`
       : `Konfirmasi tersimpan${who}: tidak hadir.`;
   };
 
@@ -122,16 +118,13 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
     if (group && party.rsvp?.name && !nameInput.value) nameInput.value = party.rsvp.name;
     note.hidden = true;
     retry.hidden = true;
-    const selected = party.rsvp?.attendance === 'attending' ? party.rsvp.guestCount : Number(count.value) || 1;
-    count.replaceChildren(...Array.from({ length: party.maxGuests }, (_, i) => new Option(`${i + 1} orang`, String(i + 1))));
-    count.value = String(Math.min(Math.max(selected, 1), party.maxGuests));
+    attendingCount = group ? 1 : party.maxGuests;
     if (party.rsvp) {
       const choice = form.querySelector<HTMLInputElement>(`input[name="attendance"][value="${party.rsvp.attendance}"]`);
       if (choice) choice.checked = true;
       submit.textContent = 'Perbarui konfirmasi';
       status.textContent = saved(party.rsvp);
     }
-    syncCount();
     fields.disabled = false;
   };
 
@@ -163,14 +156,14 @@ function initRsvp(form: HTMLFormElement, auth: Record<string, string> | null, re
         headers: { ...auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attendance: value,
-          guestCount: value === 'attending' ? Number(count.value) : 0,
+          guestCount: value === 'attending' ? attendingCount : 0,
           ...(group ? { name: nameInput.value, respondentKey: respondent } : {}),
         }),
       });
       submit.textContent = 'Perbarui konfirmasi';
       const who = group && rsvp.name ? `, ${rsvp.name}` : '';
       status.textContent = rsvp.attendance === 'attending'
-        ? `Terima kasih${who}! Kehadiran ${rsvp.guestCount} orang telah tercatat.`
+        ? `Terima kasih${who}! Kehadiran Anda telah tercatat.`
         : `Terima kasih atas konfirmasinya${who}. Doa Anda sangat berarti bagi kami.`;
     } catch (error) {
       // Choices stay as entered so the guest can simply try again.

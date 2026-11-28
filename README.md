@@ -88,11 +88,12 @@ How it works:
 - Each invited party (a person or a family) gets a personal link
   `/?to=<name>&k=<code>`. `to` is only the greeting on the cover; `k` is a random
   43-character code. The database stores only its SHA-256 hash.
-- **RSVP**: one current response per party (hadir + number of people up to the party's
-  allowance, or tidak hadir). Guests can change it later from the same link.
+- **RSVP**: one current response per party: hadir or tidak hadir only (no head-count field,
+  the couple's choice). "Hadir" counts the whole invitation, its `max_guests`, in the totals,
+  so they are an upper estimate. Guests can change it later from the same link.
 - **Group links** (e.g. "Teman Kantor"): one link shared by many people. Each person enters
-  their own name and head count (at most `max_guests` per person), and the answers **add up**:
-  Budi 2 + Sari 1 = 3. The phone remembers its own answer, so the same person can change it
+  their own name and answers for themselves (hadir counts 1), and the answers **add up**:
+  Budi + Sari = 2. The phone remembers its own answer, so the same person can change it
   later; retries never count twice. Answering again from another phone counts as a new person.
   A group accepts at most 300 answers, 200 wishes, and 60 RSVPs / 20 wishes per 10 minutes.
   Its QR works for everyone in the group: staff see the group's totals, never "sudah check-in".
@@ -142,8 +143,8 @@ npm run guests -- export                        # attendance + wishes CSV backup
   Teman Kantor,5,ya
   ```
 
-  For a group, `max_guests` is the limit **per person who answers**. Share the group link in
-  that group's chat only: anyone who has it can answer. Answers per person:
+  For a personal link, `max_guests` is what "hadir" counts; on a group link each answer counts
+  one person. Share the group link in that group's chat only: anyone who has it can answer. Answers per person:
   `select * from private.group_responses;`
 - **Hide a wish**: wishes appear without review. To take one down: Supabase → Table Editor →
   wishes, set `approved` to false (or SQL Editor:
