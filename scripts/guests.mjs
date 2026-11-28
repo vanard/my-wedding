@@ -4,12 +4,16 @@
 //   npm run guests -- import private/guests.csv   add parties, write private/links-<time>.csv
 //   npm run guests -- reissue "Exact Name"        new link for one party (the old one stops working)
 //   npm run guests -- export                      RSVP/check-in + wishes backup to private/
+//   npm run guests -- members "Group" "A|B|C"     add member names to an existing group
 //
-// guests.csv columns (header row required): name,max_guests[,group]
+// guests.csv columns (header row required): name,max_guests[,group][,members]
 //   e.g.  Bapak Budi & Keluarga,4
-//         Teman Kantor,5,ya
-// A row with group = ya/yes/1 is a group link shared by many people: each person enters
-// their own name and head count (at most max_guests per person), and the answers add up.
+//         Teman Kantor,1,ya,Budi Santoso|Sari Dewi|Andi
+// RSVP is hadir / tidak hadir only: "hadir" counts max_guests on a personal link. A row with
+// group = ya/yes/1 is a group link shared by many people, each answering for themselves (one
+// person each). With `members` (names separated by |), each person picks their own name from
+// that list, the name is locked to the first phone that answers, and their Entry Access Card
+// checks in that person. Without members, they type their name.
 // Each personal link is /?to=<name>&k=<code>. Only a SHA-256 hash of the code is stored, so
 // the links file is the only copy: keep it private and back it up. Lost links can be reissued.
 import { createHash, randomBytes } from 'node:crypto';
@@ -83,7 +87,8 @@ async function importGuests(file) {
   const nameAt = columns?.indexOf('name') ?? -1;
   const maxAt = columns?.indexOf('max_guests') ?? -1;
   const groupAt = columns?.indexOf('group') ?? -1;
-  if (nameAt < 0 || maxAt < 0) die('The first row must be the header: name,max_guests (optionally ,group)');
+  const membersAt = columns?.indexOf('members') ?? -1;
+  if (nameAt < 0 || maxAt < 0) die('The first row must be the header: name,max_guests (optionally ,group,members)');
 
   const existing = new Set((await db('invitation_parties?select=display_name')).map((p) => p.display_name.toLowerCase()));
   const seen = new Set();
@@ -103,22 +108,28 @@ async function importGuests(file) {
     const lower = name.toLowerCase();
     if (seen.has(lower)) die(`${where}: "${name}" appears twice. Make each name unique, e.g. "Budi (Kantor)".`);
     seen.add(lower);
+    const members = memberNames(membersAt < 0 ? '' : line[membersAt] ?? '', where);
+    if (members.length && !group) die(`${where}: members are only for a group row (group = ya).`);
     if (existing.has(lower)) { skipped.push(name); return; }
-    parties.push({ name, max, group, code: newCode() });
+    parties.push({ name, max, group, members, code: newCode() });
   });
 
   for (let i = 0; i < parties.length; i += 200) {
     const batch = parties.slice(i, i + 200);
-    await db('invitation_parties', {
+    const saved = await db('invitation_parties?select=id,display_name', {
       method: 'POST',
-      headers: { Prefer: 'return=minimal' },
+      headers: { Prefer: 'return=representation' },
       body: JSON.stringify(batch.map((p) => ({ display_name: p.name, max_guests: p.max, is_group: p.group, token_hash: hash(p.code) }))),
     });
+    const idOf = new Map(saved.map((p) => [p.display_name, p.id]));
+    const rows = batch.flatMap((p) => p.members.map((member) => ({ party_id: idOf.get(p.name), name: member })));
+    if (rows.length) await db('group_members', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(rows) });
   }
   if (parties.length) {
     const path = await save('links', [['name', 'max_guests', 'group', 'link'],
       ...parties.map((p) => [p.name, p.max, p.group ? 'ya' : '', link(p.name, p.code)])]);
-    console.log(`Added ${parties.length} parties. Personal links: ${path}`);
+    const memberCount = parties.reduce((sum, p) => sum + p.members.length, 0);
+    console.log(`Added ${parties.length} parties${memberCount ? ` (${memberCount} group members)` : ''}. Personal links: ${path}`);
   } else console.log('No new parties to add.');
   if (skipped.length) console.log(`Skipped ${skipped.length} already imported (use "reissue" for a new link): ${skipped.join(', ')}`);
 }
@@ -138,12 +149,38 @@ async function reissue(name) {
   console.log(`New link for ${updated[0].display_name} (the previous link no longer works): ${path}`);
 }
 
+/** Member names from one cell, separated by |; each trimmed, unique within the group. */
+function memberNames(cell, where) {
+  const names = cell.split('|').map((name) => name.trim().replace(/\s+/g, ' ')).filter(Boolean);
+  const seen = new Set();
+  for (const name of names) {
+    if ([...name].length > 100) die(`${where}: member "${name}" is longer than 100 characters.`);
+    if (seen.has(name.toLowerCase())) die(`${where}: member "${name}" appears twice in this group.`);
+    seen.add(name.toLowerCase());
+  }
+  return names;
+}
+
+async function addMembers(group, cell) {
+  if (!group || !cell) die('Usage: npm run guests -- members "Exact Group Name" "Name A|Name B"');
+  const [party] = await db(`invitation_parties?display_name=eq.${encodeURIComponent(group)}&select=id,is_group`);
+  if (!party) die(`No party named exactly "${group}".`);
+  if (!party.is_group) die(`"${group}" is a personal invitation, not a group.`);
+  const current = new Set((await db(`group_members?party_id=eq.${party.id}&select=name`)).map((m) => m.name.toLowerCase()));
+  const names = memberNames(cell, 'members').filter((name) => !current.has(name.toLowerCase()));
+  if (!names.length) { console.log('No new members to add.'); return; }
+  await db('group_members', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(names.map((name) => ({ party_id: party.id, name }))) });
+  console.log(`Added ${names.length} members to "${group}": ${names.join(', ')}. The group's link is unchanged.`);
+}
+
 async function exportAll() {
-  const all = await db('invitation_parties?select=display_name,max_guests,is_group,checked_in_at,created_at,rsvps(attendance,guest_count,updated_at),group_rsvps(name,attendance,guest_count,updated_at)&order=display_name');
+  const all = await db('invitation_parties?select=display_name,max_guests,is_group,checked_in_at,created_at,rsvps(attendance,guest_count,updated_at),group_rsvps(name,attendance,guest_count,updated_at),group_members(name,attendance,answered_at,checked_in_at)&order=display_name');
   const parties = all.filter((p) => !p.is_group);
   const groups = all.filter((p) => p.is_group);
   const answers = groups.flatMap((g) => (g.group_rsvps ?? []).map((r) => ({ ...r, group: g })));
-  // One row per personal invitation, then one row per person who answered through a group link.
+  const members = groups.flatMap((g) => (g.group_members ?? []).map((m) => ({ ...m, group: g })));
+  // One row per personal invitation, one per person who answered through a group link, and one
+  // per listed group member (answered or not).
   const guests = await save('attendance', [
     ['name', 'group', 'max_guests', 'attendance', 'guest_count', 'rsvp_updated_at', 'checked_in_at'],
     ...parties.map((p) => {
@@ -151,6 +188,7 @@ async function exportAll() {
       return [p.display_name, '', p.max_guests, r?.attendance ?? '', r?.guest_count ?? '', r?.updated_at ?? '', p.checked_in_at ?? ''];
     }),
     ...answers.map((r) => [r.name, r.group.display_name, r.group.max_guests, r.attendance, r.guest_count, r.updated_at, r.group.checked_in_at ?? '']),
+    ...members.map((m) => [m.name, m.group.display_name, 1, m.attendance ?? '', m.attendance === 'attending' ? 1 : m.attendance ? 0 : '', m.answered_at ?? '', m.checked_in_at ?? '']),
   ]);
   const wishes = await db('wishes?select=name,message,approved,created_at,invitation_parties(display_name)&order=created_at');
   const wishesPath = await save('wishes', [
@@ -162,14 +200,18 @@ async function exportAll() {
   console.log(`${parties.length} parties, ${attending.length} attending (${people} people), ${parties.filter((p) => p.checked_in_at).length} checked in.`);
   for (const g of groups) {
     const rows = g.group_rsvps ?? [];
-    const coming = rows.filter((r) => r.attendance === 'attending').reduce((sum, r) => sum + r.guest_count, 0);
-    console.log(`Group "${g.display_name}": ${rows.length} answers, ${coming} people attending.`);
+    const listed = g.group_members ?? [];
+    const coming = rows.filter((r) => r.attendance === 'attending').reduce((sum, r) => sum + r.guest_count, 0)
+      + listed.filter((m) => m.attendance === 'attending').length;
+    const answered = rows.length + listed.filter((m) => m.attendance).length;
+    console.log(`Group "${g.display_name}": ${answered} answers${listed.length ? ` of ${listed.length} members` : ''}, ${coming} people attending.`);
   }
   console.log(`Saved ${guests} and ${wishesPath}`);
 }
 
-const [command, arg] = process.argv.slice(2);
+const [command, arg, extra] = process.argv.slice(2);
 if (command === 'import') await importGuests(arg ?? die('Usage: npm run guests -- import private/guests.csv'));
 else if (command === 'reissue') await reissue(arg);
 else if (command === 'export') await exportAll();
-else die('Usage: npm run guests -- import <file.csv> | reissue "<name>" | export');
+else if (command === 'members') await addMembers(arg, extra);
+else die('Usage: npm run guests -- import <file.csv> | reissue "<name>" | export | members "<group>" "A|B"');

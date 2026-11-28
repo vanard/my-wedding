@@ -88,17 +88,27 @@ How it works:
 - Each invited party (a person or a family) gets a personal link
   `/?to=<name>&k=<code>`. `to` is only the greeting on the cover; `k` is a random
   43-character code. The database stores only its SHA-256 hash.
-- **RSVP**: one current response per party (hadir + number of people up to the party's
-  allowance, or tidak hadir). Guests can change it later from the same link.
+- **RSVP**: one current response per party: hadir or tidak hadir only (no head-count field,
+  the couple's choice). "Hadir" counts the whole invitation, its `max_guests`, in the totals,
+  so they are an upper estimate. Guests can change it later from the same link.
 - **Group links** (e.g. "Teman Kantor"): one link shared by many people. Each person enters
-  their own name and head count (at most `max_guests` per person), and the answers **add up**:
-  Budi 2 + Sari 1 = 3. The phone remembers its own answer, so the same person can change it
+  their own name and answers for themselves (hadir counts 1), and the answers **add up**:
+  Budi + Sari = 2. The phone remembers its own answer, so the same person can change it
   later; retries never count twice. Answering again from another phone counts as a new person.
   A group accepts at most 300 answers, 200 wishes, and 60 RSVPs / 20 wishes per 10 minutes.
   Its QR works for everyone in the group: staff see the group's totals, never "sudah check-in".
+- **Group with members** (recommended for groups): the group lists its members by name. Each
+  person opens the group link, **picks their own name** from the list and answers hadir /
+  tidak hadir (one person each). A name is **locked to the first phone** that answers for it;
+  other phones see it as "sudah dipilih". Picking another name from the same phone releases
+  the first. Their Entry Access Card QR then carries that name, so the scan checks in **that
+  person** ("Selamat datang · Teman Kantor" / "Budi"), and a second scan says "sudah check-in".
+  Scanning the group's own QR, or finding the group by a member's name in the staff search,
+  shows the member list for staff to tap the arriving person. Anyone with the group link can
+  see the member names (not their answers).
 - **Wishes**: sent from a personal or group link and shown on the site right away (no
-  review). The sender sees theirs at once; others within about a minute, since the public
-  list (name, message, date) is cached.
+  review). The sender sees theirs at once; others within about 15 seconds, since the public
+  list (name, message, date) is cached briefly.
 - **Entry Access Card**: its QR opens `/checkin/#<code>`. Staff phones signed in with
   `CHECKIN_KEY` record the arrival; a second scan shows "Sudah check-in sebelumnya".
   Staff can also search by name for guests without their QR.
@@ -116,7 +126,7 @@ How it works:
 ### Setup (once per Supabase project)
 
 1. Apply `supabase/migrations/0001_invitation.sql`, `0002_guest_services.sql`,
-   `0003_group_invitations.sql` and `0004_auto_approve_wishes.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
+   `0003_group_invitations.sql`, `0004_auto_approve_wishes.sql` and `0005_group_members.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
    Try it on a test project first.
 2. In Vercel → Settings → Environment Variables (Production, and Preview if used), add
    `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Project Settings → API Keys → secret key) and
@@ -126,9 +136,10 @@ How it works:
 ### Owner operations
 
 ```sh
-# private/ is git-ignored and never deployed. Columns: name,max_guests[,group]
+# private/ is git-ignored and never deployed. Columns: name,max_guests[,group][,members]
 npm run guests -- import private/guests.csv     # writes private/links-<time>.csv
 npm run guests -- reissue "Bapak Budi & Keluarga"  # new link; the old one stops working
+npm run guests -- members "Teman Kantor" "Dina|Eko"  # add names to an existing group (same link)
 npm run guests -- export                        # attendance + wishes CSV backup in private/
 ```
 
@@ -137,21 +148,27 @@ npm run guests -- export                        # attendance + wishes CSV backup
 - **Group links**: add a `group` column and write `ya` on group rows, e.g.
 
   ```csv
-  name,max_guests,group
-  Bapak Budi & Keluarga,4,
-  Teman Kantor,5,ya
+  name,max_guests,group,members
+  Bapak Budi & Keluarga,4,,
+  Teman Kantor,1,ya,Budi Santoso|Sari Dewi|Andi
   ```
 
-  For a group, `max_guests` is the limit **per person who answers**. Share the group link in
-  that group's chat only: anyone who has it can answer. Answers per person:
-  `select * from private.group_responses;`
+  `members` lists the group's people, separated by `|` (each name unique within the group).
+  Leave it empty for a group where people type their own name. For a personal link,
+  `max_guests` is what "hadir" counts; members always count one each. Share the group link
+  in that group's chat only. Answers per member: `select * from private.group_member_status;`
+  (typed-name groups: `select * from private.group_responses;`).
+- **Unlock a member's name** (they answered from the wrong phone, or someone picked their
+  name): Supabase → SQL Editor:
+  `update public.group_members set respondent_key = null, attendance = null, answered_at = null where name = 'Budi Santoso';`
+  (add `and party_id = '<group id>'` if the name is in several groups). They can then pick it again.
 - **Hide a wish**: wishes appear without review. To take one down: Supabase → Table Editor →
   wishes, set `approved` to false (or SQL Editor:
   `update public.wishes set approved = false where id = '<id>';`). It leaves the site within
-  about a minute; set it back to true to show it again.
+  about 15 seconds; set it back to true to show it again.
 - **Attendance**: `select * from private.attendance_totals;` (`total_guests_attending`
   includes group answers) and `select * from private.guest_overview;`, or
-  `npm run guests -- export` (one row per personal invitation and per group answer).
+  `npm run guests -- export` (one row per personal invitation, group answer and group member).
 - **Venue day**: give staff the `/checkin/` address and `CHECKIN_KEY`. Each staff phone
   signs in once. Afterwards rotate `CHECKIN_KEY` in Vercel (and redeploy).
 - **Before sending invitations and before the event**: open the Supabase dashboard to make

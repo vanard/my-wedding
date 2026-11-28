@@ -148,6 +148,27 @@ test.describe('group links', () => {
     expect((await post({ attendance: 'declined', name: 'Budi', respondentKey: key })).status).toBe(409);
   });
 
+  test('a listed member answers by id: one person, locked names are a clear 409', async () => {
+    const member = '3c1d2e3f-4a5b-4c6d-8e7f-90a1b2c3d4e5';
+    reply({ attendance: 'attending', guestCount: 1, updatedAt: '2026-11-27T02:00:00Z', name: 'Budi', memberId: member });
+    const response = await post({ attendance: 'attending', guestCount: 9, memberId: member.toUpperCase(), respondentKey: key });
+    expect(response.status).toBe(200);
+    expect(calls[0]!.url).toContain('/rpc/submit_member_rsvp');
+    // The count from the browser is ignored: a member is one person.
+    expect(calls[0]!.body).toEqual({ p_token_hash: CODE_HASH, p_member_id: member, p_respondent_key: key, p_attendance: 'attending' });
+
+    expect((await post({ attendance: 'attending', memberId: 'nope', respondentKey: key })).status).toBe(400);
+    expect((await post({ attendance: 'attending', memberId: member })).status).toBe(400);
+    expect(calls).toHaveLength(1);
+
+    raise('NAME_TAKEN');
+    const taken = await post({ attendance: 'declined', memberId: member, respondentKey: key });
+    expect(taken.status).toBe(409);
+    expect((await taken.json()).error.code).toBe('NAME_TAKEN');
+    raise('MEMBER_NOT_FOUND');
+    expect((await post({ attendance: 'declined', memberId: member, respondentKey: key })).status).toBe(422);
+  });
+
   test('the browser key selects that person\'s own answer', async () => {
     reply({ name: 'Teman Kantor', maxGuests: 5, group: true, rsvp: null });
     const response = await getGuest(req('/api/guest', { headers: { ...guest, 'x-respondent-key': key } }));
@@ -194,7 +215,7 @@ test.describe('wishes', () => {
     ]);
     const response = await getWishes(req('/api/wishes?limit=1'));
     expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toContain('s-maxage=60');
+    expect(response.headers.get('cache-control')).toContain('s-maxage=5, stale-while-revalidate=10');
     const body = await response.json();
     expect(body.wishes).toEqual([{ name: 'Rina', message: 'Selamat!', createdAt: '2026-11-14T02:00:00+00:00' }]);
     expect(body.next).toBe('2026-11-14T02:00:00+00:00_00000000-0000-4000-8000-000000000002');
@@ -275,5 +296,21 @@ test.describe('staff check-in', () => {
     expect((await post({ code: 'not a code' })).status).toBe(400);
     raise('NOT_FOUND');
     expect((await post({ code: 'B'.repeat(43) })).status).toBe(404);
+  });
+
+  test('checks in one group member by their card QR or from the group list', async () => {
+    const member = '3c1d2e3f-4a5b-4c6d-8e7f-90a1b2c3d4e5';
+    const party = { id: '00000000-0000-4000-8000-00000000000b', name: 'Teman Kantor', maxGuests: 1, checkedInAt: '2026-12-20T00:40:00Z', already: false, rsvp: null,
+      member: { id: member, name: 'Budi', attendance: 'attending', checkedInAt: '2026-12-20T00:40:00Z' } };
+    reply(party);
+    expect((await (await post({ code: CODE, memberId: member })).json()).party.member.name).toBe('Budi');
+    expect(calls[0]!.url).toContain('/rpc/check_in_member');
+    expect(calls[0]!.body).toEqual({ p_member_id: member, p_token_hash: CODE_HASH });
+    reply({ ...party, already: true });
+    expect((await (await post({ partyId: party.id, memberId: member })).json()).party.already).toBe(true);
+    expect(calls[1]!.body).toEqual({ p_member_id: member, p_party_id: party.id });
+    expect((await post({ code: CODE, memberId: 'nope' })).status).toBe(400);
+    expect((await post({ memberId: member })).status).toBe(400);
+    expect(calls).toHaveLength(2);
   });
 });

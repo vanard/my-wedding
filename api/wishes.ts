@@ -27,8 +27,12 @@ export const GET = handle(async (request) => {
     next: rows.length > limit && last ? `${last.created_at}_${last.id}` : null,
   };
   return json(body, 200, {
-    // Shared cache only for this public list; a new approval shows up within about a minute.
-    'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+    // Shared cache only for this public list, kept short: a new wish shows up for everyone within
+    // about 15 seconds (5 s fresh + at most 10 s stale while it refreshes), and the database
+    // still sees at most one list request per 5 s per CDN region, however many guests visit.
+    // A long stale window showed old lists: with few visitors, the refresh only happens after
+    // someone has already been served the stale copy.
+    'Cache-Control': 'public, max-age=0, s-maxage=5, stale-while-revalidate=10',
   });
 });
 

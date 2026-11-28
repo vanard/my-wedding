@@ -2,13 +2,17 @@
 // personal code from `?k=`. The code is only a lookup key: the check-in endpoint verifies
 // its hash on the server, and staff must be signed in. `?to=` stays a display greeting.
 import type { QrCodeGenerateResult } from 'uqr';
-import { guestCode } from './guest-code';
+import { chosenMember, guestCode } from './guest-code';
 const BODY_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const DISPLAY_FONT = '"Cormorant Garamond", Garamond, Georgia, serif';
 
-/** The check-in link. The code goes in the fragment, so it is never sent in a request line. */
-export function checkInUrl(code: string): string {
-  return `${window.location.origin}/checkin/#${code}`;
+/**
+ * The check-in link. The code goes in the fragment, so it is never sent in a request line.
+ * On a group link where the guest picked their name, the member id follows (`<code>.<id>`), so
+ * the scan records that person.
+ */
+export function checkInUrl(code: string, memberId?: string): string {
+  return `${window.location.origin}/checkin/#${code}${memberId ? `.${memberId}` : ''}`;
 }
 
 function qrSvg(qr: QrCodeGenerateResult): SVGSVGElement {
@@ -160,6 +164,8 @@ export function initAccessCard(): (onClose?: () => void) => void {
   const status = dialog.querySelector<HTMLElement>('[data-access-status]');
   const code = guestCode();
   let qr: QrCodeGenerateResult | null = null;
+  // A group guest who picks (or changes) their name gets a QR for that name.
+  document.addEventListener('invitation:member-chosen', () => { qr = null; if (dialog.open) void prepare(); });
   let afterClose: (() => void) | undefined;
   let opener: HTMLElement | null = null;
 
@@ -167,7 +173,7 @@ export function initAccessCard(): (onClose?: () => void) => void {
     if (!code || qr || !box) return;
     try {
       const { encode } = await import('uqr');
-      qr = encode(checkInUrl(code), { ecc: 'M', border: 0 });
+      qr = encode(checkInUrl(code, chosenMember(code)?.id), { ecc: 'M', border: 0 });
       box.replaceChildren(qrSvg(qr));
       dialog.querySelector<HTMLElement>('[data-access-note]')!.hidden = false;
       if (download) download.hidden = false;
@@ -180,7 +186,7 @@ export function initAccessCard(): (onClose?: () => void) => void {
     if (!qr || download.disabled) return;
     download.disabled = true;
     if (status) status.textContent = 'Menyiapkan kartu…';
-    const guest = dialog.querySelector('[data-guest-name]')?.textContent?.trim() || 'Tamu Undangan';
+    const guest = (code && chosenMember(code)?.name) || dialog.querySelector('[data-guest-name]')?.textContent?.trim() || 'Tamu Undangan';
     try {
       await save(await renderCard(dialog, qr, guest), guest);
       if (status) status.textContent = '';

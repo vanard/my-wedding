@@ -30,6 +30,10 @@ const { couple } = invitation;
           <div><dt>Jatah undangan</dt><dd data-result-allowance></dd></div>
           <div><dt>Check-in</dt><dd data-result-time></dd></div>
         </dl>
+        <div data-result-members hidden>
+          <p class="small members-note">Ketuk nama tamu yang datang:</p>
+          <ul class="hits" data-result-member-list></ul>
+        </div>
       </section>
       <p class="status center" role="status" data-checkin-status></p>
 
@@ -75,4 +79,6 @@ const { couple } = invitation;
   .hits :global(.hit-meta) { display: block; font-size: .72rem; color: var(--muted); font-weight: 400; }
   .hits :global(.button) { flex: none; padding-inline: 1rem; }
   .quiet { border-color: var(--line); color: var(--muted); }
+  .members-note { margin: 1.25rem 0 0; text-align: left; }
+  .result .hits :global(li) { text-align: left; }
 </style>
