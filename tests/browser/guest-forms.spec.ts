@@ -115,8 +115,11 @@ test('group link: each person answers with their own name; this phone keeps its 
 
 test('wishes: listed as plain text with paging; a retried wish reuses its key and shows at once', async ({ page }) => {
   await page.route('**/api/guest', (route) => route.fulfill(json({ party: { name: 'Rina', maxGuests: 1, rsvp: null } })));
+  const limits: (string | null)[] = [];
   await page.route('**/api/wishes?*', (route) => {
-    const before = new URL(route.request().url()).searchParams.get('before');
+    const params = new URL(route.request().url()).searchParams;
+    limits.push(params.get('limit'));
+    const before = params.get('before');
     return route.fulfill(json(before
       ? { wishes: [{ name: 'Andi', message: 'Bahagia selalu', createdAt: '2026-11-12T02:00:00Z' }], next: null }
       : { wishes: [{ name: '<img src=x onerror=alert(1)>', message: 'Selamat!\nSemoga sakinah', createdAt: '2026-11-13T02:00:00Z' }], next: '2026-11-13T02:00:00+00:00_00000000-0000-4000-8000-000000000001' }));
@@ -136,6 +139,7 @@ test('wishes: listed as plain text with paging; a retried wish reuses its key an
   await page.getByRole('button', { name: 'Muat ucapan lainnya' }).click();
   await expect(list.locator('.wish')).toHaveCount(2);
   await expect(page.getByRole('button', { name: 'Muat ucapan lainnya' })).toBeHidden();
+  expect(limits).toEqual(['5', '5']); // 5 wishes per page
 
   await page.locator('#wish-message').fill('Selamat menempuh hidup baru');
   await page.getByRole('button', { name: 'Kirim ucapan' }).click();

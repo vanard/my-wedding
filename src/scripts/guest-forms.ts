@@ -280,7 +280,8 @@ function initWishList(section: HTMLElement) {
     more.disabled = true;
     status.textContent = next ? 'Memuat…' : '';
     try {
-      const params = new URLSearchParams({ limit: '20' });
+      // 5 per page (the couple's choice): a short list, with "Muat ucapan lainnya" for more.
+      const params = new URLSearchParams({ limit: '5' });
       if (next) params.set('before', next);
       const page = await request<WishesPage>(`/api/wishes?${params}`);
       if (page.wishes.length) empty.hidden = true;
