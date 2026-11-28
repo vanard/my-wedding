@@ -13,7 +13,7 @@ import { rsvpInput } from './_lib/validate.js';
 import type { Rsvp } from '../src/lib/contracts.js';
 
 export const POST = handle(async (request) => {
-  const codeHash = guestCodeHash(request);
+  const codeHash = await guestCodeHash(request);
   const input = rsvpInput(await readJson(request, 1024));
   if (input.memberId) {
     const rsvp = await rpc<Rsvp>('submit_member_rsvp', {

@@ -5,6 +5,7 @@
 //   npm run guests -- reissue "Exact Name"        new link for one party (the old one stops working)
 //   npm run guests -- export                      RSVP/check-in + wishes backup to private/
 //   npm run guests -- members "Group" "A|B|C"     add member names to an existing group
+//   npm run guests -- short-links                 short links for parties that have none yet
 //
 // guests.csv columns (header row required): name,max_guests[,group][,members]
 //   e.g.  Bapak Budi & Keluarga,4
@@ -14,8 +15,11 @@
 // person each). With `members` (names separated by |), each person picks their own name from
 // that list, the name is locked to the first phone that answers, and their Entry Access Card
 // checks in that person. Without members, they type their name.
-// Each personal link is /?to=<name>&k=<code>. Only a SHA-256 hash of the code is stored, so
-// the links file is the only copy: keep it private and back it up. Lost links can be reissued.
+// Each link is /i/<name>-<code>, e.g. /i/Riswanda-x7k2p9q4mb: the 10-character code is the key,
+// the name part only the greeting. Only a SHA-256 hash of the code is stored, so the links file
+// is the only copy: keep it private and back it up. Lost links can be reissued.
+// The first links were /?to=<name>&k=<43-character code>; those keep working. `short-links`
+// gives those parties a short link too, without stopping the old one.
 import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
@@ -38,9 +42,33 @@ async function db(path, init = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+// Every party also keeps a long code (token_hash). New parties get one too, unused by their
+// link, so all database functions work the same for both kinds of link.
 const newCode = () => randomBytes(32).toString('base64url');
 const hash = (code) => createHash('sha256').update(code).digest('hex');
-const link = (name, code) => `${SITE}/?to=${encodeURIComponent(name)}&k=${code}`;
+
+// 10 characters a-z 0-9 (about 52 bits), unbiased: bytes from 252 up are skipped.
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+function newLinkCode() {
+  let code = '';
+  while (code.length < 10) for (const byte of randomBytes(16)) if (byte < 252 && code.length < 10) code += ALPHABET[byte % 36];
+  return code;
+}
+
+/**
+ * The name as it reads in the link, and so on the cover: words joined by "-", ", " as "_", dots
+ * kept, & as "dan", accents and apostrophes dropped. All are plain URL characters, so chat apps
+ * keep the link whole. "Dwi Asti Febrianti, SKM., M.AK." -> Dwi-Asti-Febrianti_SKM._M.AK.
+ */
+function slug(name) {
+  const clean = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/['\u2018\u2019`\u00b4]/g, '').replace(/&/g, ' dan ');
+  const parts = clean.split(/\s*,\s*/).map((part) => part.split(/[^A-Za-z0-9.]+/).filter(Boolean).join('-')).filter(Boolean);
+  let out = parts.join('_');
+  // Very long names: cut at a word, at most 60 characters.
+  if (out.length > 60) out = out.slice(0, 61).replace(/[-_][^-_]*$/, '') || out.slice(0, 60);
+  return out.replace(/^[-_.]+/, '') || 'Tamu';
+}
+const link = (name, linkCode) => `${SITE}/i/${slug(name)}-${linkCode}`;
 const stamp = () => new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
 
 function parseCsv(text) {
@@ -111,7 +139,7 @@ async function importGuests(file) {
     const members = memberNames(membersAt < 0 ? '' : line[membersAt] ?? '', where);
     if (members.length && !group) die(`${where}: members are only for a group row (group = ya).`);
     if (existing.has(lower)) { skipped.push(name); return; }
-    parties.push({ name, max, group, members, code: newCode() });
+    parties.push({ name, max, group, members, code: newCode(), linkCode: newLinkCode() });
   });
 
   for (let i = 0; i < parties.length; i += 200) {
@@ -119,7 +147,7 @@ async function importGuests(file) {
     const saved = await db('invitation_parties?select=id,display_name', {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
-      body: JSON.stringify(batch.map((p) => ({ display_name: p.name, max_guests: p.max, is_group: p.group, token_hash: hash(p.code) }))),
+      body: JSON.stringify(batch.map((p) => ({ display_name: p.name, max_guests: p.max, is_group: p.group, token_hash: hash(p.code), link_hash: hash(p.linkCode) }))),
     });
     const idOf = new Map(saved.map((p) => [p.display_name, p.id]));
     const rows = batch.flatMap((p) => p.members.map((member) => ({ party_id: idOf.get(p.name), name: member })));
@@ -127,7 +155,7 @@ async function importGuests(file) {
   }
   if (parties.length) {
     const path = await save('links', [['name', 'max_guests', 'group', 'link'],
-      ...parties.map((p) => [p.name, p.max, p.group ? 'ya' : '', link(p.name, p.code)])]);
+      ...parties.map((p) => [p.name, p.max, p.group ? 'ya' : '', link(p.name, p.linkCode)])]);
     const memberCount = parties.reduce((sum, p) => sum + p.members.length, 0);
     console.log(`Added ${parties.length} parties${memberCount ? ` (${memberCount} group members)` : ''}. Personal links: ${path}`);
   } else console.log('No new parties to add.');
@@ -137,15 +165,16 @@ async function importGuests(file) {
 async function reissue(name) {
   if (!SITE.startsWith('https://')) die('Set SITE_URL in .env to the live site, e.g. https://your-project.vercel.app');
   if (!name) die('Usage: npm run guests -- reissue "Exact Name"');
-  const code = newCode();
+  // Both codes are replaced, so the old short link and any old long link stop working.
+  const linkCode = newLinkCode();
   const updated = await db(`invitation_parties?display_name=eq.${encodeURIComponent(name)}&select=display_name,max_guests,is_group`, {
     method: 'PATCH',
     headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({ token_hash: hash(code) }),
+    body: JSON.stringify({ token_hash: hash(newCode()), link_hash: hash(linkCode) }),
   });
   if (!updated.length) die(`No party named exactly "${name}".`);
   const p = updated[0];
-  const path = await save('links-reissued', [['name', 'max_guests', 'group', 'link'], [p.display_name, p.max_guests, p.is_group ? 'ya' : '', link(p.display_name, code)]]);
+  const path = await save('links-reissued', [['name', 'max_guests', 'group', 'link'], [p.display_name, p.max_guests, p.is_group ? 'ya' : '', link(p.display_name, linkCode)]]);
   console.log(`New link for ${updated[0].display_name} (the previous link no longer works): ${path}`);
 }
 
@@ -171,6 +200,25 @@ async function addMembers(group, cell) {
   if (!names.length) { console.log('No new members to add.'); return; }
   await db('group_members', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(names.map((name) => ({ party_id: party.id, name }))) });
   console.log(`Added ${names.length} members to "${group}": ${names.join(', ')}. The group's link is unchanged.`);
+}
+
+// Short links for parties that do not have one yet (those imported before short links). Their
+// old /?to=…&k=… link keeps working; the party just gains a second, short link.
+async function shortLinks() {
+  if (!SITE.startsWith('https://')) die('Set SITE_URL in .env to the live site, e.g. https://your-project.vercel.app');
+  const parties = await db('invitation_parties?link_hash=is.null&select=id,display_name,max_guests,is_group&order=display_name');
+  if (!parties.length) { console.log('Every party already has a short link.'); return; }
+  const rows = [];
+  for (const p of parties) {
+    const linkCode = newLinkCode();
+    // link_hash=is.null again, so a link made meanwhile is never replaced.
+    const updated = await db(`invitation_parties?id=eq.${p.id}&link_hash=is.null&select=id`, {
+      method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ link_hash: hash(linkCode) }),
+    });
+    if (updated.length) rows.push([p.display_name, p.max_guests, p.is_group ? 'ya' : '', link(p.display_name, linkCode)]);
+  }
+  const path = await save('links-short', [['name', 'max_guests', 'group', 'link'], ...rows]);
+  console.log(`Short links for ${rows.length} parties (their old links still work): ${path}`);
 }
 
 async function exportAll() {
@@ -214,4 +262,5 @@ if (command === 'import') await importGuests(arg ?? die('Usage: npm run guests -
 else if (command === 'reissue') await reissue(arg);
 else if (command === 'export') await exportAll();
 else if (command === 'members') await addMembers(arg, extra);
-else die('Usage: npm run guests -- import <file.csv> | reissue "<name>" | export | members "<group>" "A|B"');
+else if (command === 'short-links') await shortLinks();
+else die('Usage: npm run guests -- import <file.csv> | reissue "<name>" | export | members "<group>" "A|B" | short-links');

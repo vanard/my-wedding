@@ -60,6 +60,28 @@ test('RSVP from a personal link: loads the party, keeps input after a failure, t
   expect(posts[2]!.postDataJSON()).toEqual({ attendance: 'declined', guestCount: 0 });
 });
 
+test('a short link /i/<name>-<code> greets by name and authorizes with its code', async ({ page }) => {
+  const SHORT = 'x7k2p9q4mb';
+  // Vercel rewrites /i/* to the invitation page (vercel.json); the static preview does not.
+  await page.route('**/i/**', async (route) => route.fulfill({ response: await route.fetch({ url: new URL('/', route.request().url()).href }) }));
+  const auth: (string | undefined)[] = [];
+  await page.route('**/api/guest', (route) => {
+    auth.push(route.request().headers().authorization);
+    return route.fulfill(json({ party: { name: 'Dwi Asti Febrianti, SKM., M.AK.', maxGuests: 2, rsvp: null } }));
+  });
+  await page.route('**/api/wishes?*', (route) => route.fulfill(json({ wishes: [], next: null })));
+
+  await page.goto(`/i/Dwi-Asti-Febrianti_SKM._M.AK.-${SHORT}`);
+  await expect(page.locator('#cover [data-guest-name]')).toHaveText('Dwi Asti Febrianti, SKM., M.AK.');
+  await page.getByRole('link', { name: 'Buka Undangan' }).click();
+  // The Entry Access Card opens with a QR for this guest.
+  await expect(page.locator('[data-access-qr] path')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await page.locator('#rsvp').scrollIntoViewIfNeeded();
+  await expect(page.locator('[data-rsvp-party-name]')).toHaveText('Dwi Asti Febrianti, SKM., M.AK.');
+  expect(auth).toEqual([`Bearer ${SHORT}`]);
+});
+
 test('an existing RSVP is shown for updating', async ({ page }) => {
   await page.route('**/api/guest', (route) => route.fulfill(json({ party: { name: 'Ibu Sari', maxGuests: 4, rsvp: { attendance: 'attending', guestCount: 3, updatedAt: '2026-11-14T02:00:00Z' } } })));
   await page.route('**/api/wishes?*', (route) => route.fulfill(json({ wishes: [], next: null })));
@@ -256,6 +278,12 @@ test('check-in: staff sign in once, scanned codes are confirmed and repeats flag
   await expect(next.locator('[data-staff-login]')).toBeHidden();
   await expect(next.locator('[data-result]')).toHaveAttribute('data-state', 'already');
   await expect(next.locator('[data-result-title]')).toHaveText('Sudah check-in sebelumnya');
+
+  // A short link's QR (/checkin/#<10-character code>) is sent the same way.
+  const third = await page.context().newPage();
+  await third.goto('/checkin/#x7k2p9q4mb');
+  await expect(third.locator('[data-result]')).toBeVisible();
+  expect(bodies.at(-1)).toEqual({ code: 'x7k2p9q4mb' });
 });
 
 test('check-in: a member card records that person; a group QR lists the members to tap', async ({ page }) => {

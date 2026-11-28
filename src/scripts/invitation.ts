@@ -8,7 +8,7 @@ import { initGiftMore } from './gift-more';
 import { initFullscreen } from './fullscreen';
 import { initBackdrop } from './backdrop';
 import { initAccessCard } from './access-card';
-import { guestCode } from './guest-code';
+import { guestCode, guestGreeting } from './guest-code';
 import { initVideoClip } from './video-clip';
 import { initGuestForms } from './guest-forms';
 
@@ -20,8 +20,9 @@ export function initInvitation() {
   const opener = document.querySelector<HTMLAnchorElement>('[data-open-invitation]');
   if (!cover || !main || !opener) return;
 
-  // `?to=` is only a display greeting. textContent keeps it from being parsed as HTML.
-  const guest = new URLSearchParams(window.location.search).get('to')?.trim().slice(0, 100);
+  // `?to=` (or a short link's name part) is only a display greeting. textContent keeps it from
+  // being parsed as HTML.
+  const guest = guestGreeting();
   if (guest) document.querySelectorAll('[data-guest-name]').forEach((element) => { element.textContent = guest; });
 
   // Guest-only parts (RSVP, Wedding Gift, the Entry Access Card and its buttons, marked

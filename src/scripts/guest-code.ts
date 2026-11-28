@@ -1,10 +1,26 @@
-// The guest's personal code from `?k=` in their invitation link. It authorizes their own RSVP,
-// wishes and Entry Access Card; the server checks it against a hash. `?to=` is only a greeting.
-const CODE = /^[A-Za-z0-9_-]{32,64}$/;
+// The guest's personal code from their invitation link. It authorizes their own RSVP, wishes
+// and Entry Access Card; the server checks it against a hash. Two link shapes work:
+//   /i/<name>-<code>     short link, e.g. /i/Riswanda-x7k2p9q4mb (10-character code)
+//   /?to=<name>&k=<code> the first links sent (43-character code)
+// The name part (and `?to=`) is only the greeting on the cover, never proof of anything.
+const CODE = /^(?:[A-Za-z0-9_-]{32,64}|[a-z0-9]{10})$/;
+const SHORT_LINK = /^\/i\/(?:([A-Za-z0-9._-]{1,80})-)?([a-z0-9]{10})\/?$/;
+
+const shortLink = () => SHORT_LINK.exec(window.location.pathname);
 
 export function guestCode(): string | null {
-  const code = new URLSearchParams(window.location.search).get('k');
+  const code = new URLSearchParams(window.location.search).get('k') ?? shortLink()?.[2] ?? null;
   return code && CODE.test(code) ? code : null;
+}
+
+/**
+ * The greeting: `?to=`, or the name part of a short link, where "-" is a space and "_" a comma
+ * (Dwi-Asti-Febrianti_SKM._M.AK. reads "Dwi Asti Febrianti, SKM., M.AK.").
+ */
+export function guestGreeting(): string | null {
+  const to = new URLSearchParams(window.location.search).get('to')?.trim().replace(/\s+/g, ' ');
+  const name = to || shortLink()?.[1]?.replace(/_+/g, ', ').replace(/-+/g, ' ').replace(/\s+/g, ' ').trim();
+  return name ? name.slice(0, 100) : null;
 }
 
 /** On a group link that lists its members: the name this phone answered for. */
