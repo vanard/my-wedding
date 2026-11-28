@@ -194,7 +194,7 @@ test.describe('wishes', () => {
     ]);
     const response = await getWishes(req('/api/wishes?limit=1'));
     expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toContain('s-maxage=60');
+    expect(response.headers.get('cache-control')).toContain('s-maxage=5, stale-while-revalidate=10');
     const body = await response.json();
     expect(body.wishes).toEqual([{ name: 'Rina', message: 'Selamat!', createdAt: '2026-11-14T02:00:00+00:00' }]);
     expect(body.next).toBe('2026-11-14T02:00:00+00:00_00000000-0000-4000-8000-000000000002');

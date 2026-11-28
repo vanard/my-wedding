@@ -97,8 +97,8 @@ How it works:
   A group accepts at most 300 answers, 200 wishes, and 60 RSVPs / 20 wishes per 10 minutes.
   Its QR works for everyone in the group: staff see the group's totals, never "sudah check-in".
 - **Wishes**: sent from a personal or group link and shown on the site right away (no
-  review). The sender sees theirs at once; others within about a minute, since the public
-  list (name, message, date) is cached.
+  review). The sender sees theirs at once; others within about 15 seconds, since the public
+  list (name, message, date) is cached briefly.
 - **Entry Access Card**: its QR opens `/checkin/#<code>`. Staff phones signed in with
   `CHECKIN_KEY` record the arrival; a second scan shows "Sudah check-in sebelumnya".
   Staff can also search by name for guests without their QR.
@@ -148,7 +148,7 @@ npm run guests -- export                        # attendance + wishes CSV backup
 - **Hide a wish**: wishes appear without review. To take one down: Supabase → Table Editor →
   wishes, set `approved` to false (or SQL Editor:
   `update public.wishes set approved = false where id = '<id>';`). It leaves the site within
-  about a minute; set it back to true to show it again.
+  about 15 seconds; set it back to true to show it again.
 - **Attendance**: `select * from private.attendance_totals;` (`total_guests_attending`
   includes group answers) and `select * from private.guest_overview;`, or
   `npm run guests -- export` (one row per personal invitation and per group answer).
