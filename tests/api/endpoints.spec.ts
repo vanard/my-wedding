@@ -82,6 +82,33 @@ test.describe('guest code authorization', () => {
     expect(response.status).toBe(401);
     expect((await response.json()).error.message).toContain('Tautan undangan tidak dikenali');
   });
+  test('a short link code is looked up by its own hash, then works like a long code', async () => {
+    const short = 'x7k2p9q4mb';
+    const shortHash = createHash('sha256').update(short).digest('hex');
+    reply(CODE_HASH);
+    reply({ name: 'Riswanda', maxGuests: 2, group: false, rsvp: null });
+    const response = await getGuest(req('/api/guest', { headers: { authorization: `Bearer ${short}` } }));
+    expect(response.status).toBe(200);
+    expect(calls[0]!.url).toContain('/rpc/party_token_for_link');
+    expect(calls[0]!.body).toEqual({ p_link_hash: shortHash });
+    expect(calls[1]!.url).toContain('/rpc/guest_party');
+    expect(calls[1]!.body).toEqual({ p_token_hash: CODE_HASH });
+    expect(JSON.stringify(calls.map((c) => c.body))).not.toContain(short);
+  });
+
+  test('an unknown short code is not recognised, and malformed short codes never reach the database', async () => {
+    reply(null);
+    raise('INVALID_TOKEN');
+    const unknown = await getGuest(req('/api/guest', { headers: { authorization: 'Bearer aaaaaaaaaa' } }));
+    expect(unknown.status).toBe(401);
+    // Its own hash matches no invitation, so the database answers "not recognised".
+    expect(calls[1]!.body).toEqual({ p_token_hash: createHash('sha256').update('aaaaaaaaaa').digest('hex') });
+    calls = [];
+    for (const code of ['AAAAAAAAAA', 'aaaaaaaaa', 'aaaaaaaaaaa', 'aaaa-aaaaa']) {
+      expect((await getGuest(req('/api/guest', { headers: { authorization: `Bearer ${code}` } }))).status).toBe(401);
+    }
+    expect(calls).toHaveLength(0);
+  });
 });
 
 test.describe('RSVP validation', () => {
@@ -296,6 +323,16 @@ test.describe('staff check-in', () => {
     expect((await post({ code: 'not a code' })).status).toBe(400);
     raise('NOT_FOUND');
     expect((await post({ code: 'B'.repeat(43) })).status).toBe(404);
+  });
+
+  test('checks in by a short link code from the QR', async () => {
+    const party = { id: '00000000-0000-4000-8000-00000000000a', name: 'Riswanda', maxGuests: 2, checkedInAt: '2026-12-20T00:40:00Z', already: false, rsvp: null };
+    reply(CODE_HASH);
+    reply(party);
+    expect(await (await post({ code: 'x7k2p9q4mb' })).json()).toEqual({ party });
+    expect(calls[0]!.url).toContain('/rpc/party_token_for_link');
+    expect(calls[1]!.url).toContain('/rpc/check_in');
+    expect(calls[1]!.body).toEqual({ p_token_hash: CODE_HASH });
   });
 
   test('checks in one group member by their card QR or from the group list', async () => {

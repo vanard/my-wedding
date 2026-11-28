@@ -37,7 +37,7 @@ export const GET = handle(async (request) => {
 });
 
 export const POST = handle(async (request) => {
-  const codeHash = guestCodeHash(request);
+  const codeHash = await guestCodeHash(request);
   const wish = wishInput(await readJson(request, 8192));
   const result = await rpc<{ approved: boolean; duplicate: boolean }>('submit_wish', {
     p_token_hash: codeHash,

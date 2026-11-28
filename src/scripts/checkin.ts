@@ -6,7 +6,7 @@
 import type { CheckInParty, StaffMember } from '../lib/contracts';
 
 const KEY = 'wedding-staff-key';
-const HASH = /^([A-Za-z0-9_-]{32,64})(?:\.([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))?$/i;
+const HASH = /^([A-Za-z0-9_-]{32,64}|[a-z0-9]{10})(?:\.([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))?$/i;
 
 type Target = { code: string; memberId?: string } | { partyId: string; memberId?: string };
 

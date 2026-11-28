@@ -9,7 +9,7 @@ import { respondentKey } from './_lib/validate.js';
 import type { Party } from '../src/lib/contracts.js';
 
 export const GET = handle(async (request) => {
-  const codeHash = guestCodeHash(request);
+  const codeHash = await guestCodeHash(request);
   const key = respondentKey(request.headers.get('x-respondent-key'));
   const party = await rpc<Party>('guest_party', key ? { p_token_hash: codeHash, p_respondent_key: key } : { p_token_hash: codeHash });
   return json({ party });

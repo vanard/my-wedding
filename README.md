@@ -86,8 +86,11 @@ SIL OFL) is self-hosted via `@fontsource/cormorant-garamond`; body text uses sys
 How it works:
 
 - Each invited party (a person or a family) gets a personal link
-  `/?to=<name>&k=<code>`. `to` is only the greeting on the cover; `k` is a random
-  43-character code. The database stores only its SHA-256 hash.
+  `/i/<name>-<code>`, e.g. `/i/Dwi-Asti-Febrianti_SKM._M.AK.-x7k2p9q4mb`. The name part is
+  only the greeting on the cover (`-` reads as a space, `_` as a comma); the code is 10 random
+  characters (a-z, 0-9). The database stores only its SHA-256 hash (`link_hash`). Vercel
+  serves `/i/*` as the invitation page (`vercel.json`). The first links,
+  `/?to=<name>&k=<43-character code>`, keep working.
 - **RSVP**: one current response per party: hadir or tidak hadir only (no head-count field,
   the couple's choice). "Hadir" counts the whole invitation, its `max_guests`, in the totals,
   so they are an upper estimate. Guests can change it later from the same link.
@@ -126,7 +129,7 @@ How it works:
 ### Setup (once per Supabase project)
 
 1. Apply `supabase/migrations/0001_invitation.sql`, `0002_guest_services.sql`,
-   `0003_group_invitations.sql`, `0004_auto_approve_wishes.sql` and `0005_group_members.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
+   `0003_group_invitations.sql`, `0004_auto_approve_wishes.sql`, `0005_group_members.sql` and `0006_short_links.sql` in order (Supabase → SQL Editor, or the Supabase MCP/CLI).
    Try it on a test project first.
 2. In Vercel → Settings → Environment Variables (Production, and Preview if used), add
    `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Project Settings → API Keys → secret key) and
@@ -140,6 +143,7 @@ How it works:
 npm run guests -- import private/guests.csv     # writes private/links-<time>.csv
 npm run guests -- reissue "Bapak Budi & Keluarga"  # new link; the old one stops working
 npm run guests -- members "Teman Kantor" "Dina|Eko"  # add names to an existing group (same link)
+npm run guests -- short-links                   # short links for parties imported before them (old links keep working)
 npm run guests -- export                        # attendance + wishes CSV backup in private/
 ```
 
